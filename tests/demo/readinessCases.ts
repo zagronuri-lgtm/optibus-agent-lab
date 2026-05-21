@@ -7,6 +7,7 @@ import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { ReadOnlyMapAudit, type ReadOnlyMapAuditInput } from "../../src/readOnlyMapAudit";
+import { GUIDED_READONLY_SCREENS, evaluateRealMapAudit, safetyCheckReadOnlyControl, type RealMapScreenEvidence } from "../../src/realReadOnlyMapCollector";
 import { RulesEngine, OPTIMIZATION_FAILURE_MESSAGE } from "../../src/rulesEngine";
 
 interface CaseResult {
@@ -347,6 +348,66 @@ async function main(): Promise<void> {
       externalPlan.futureDecisionsEnabled.includes("validateServiceAdditionOpportunity") &&
       externalPlan.active === false,
     details: externalPlan.futureDecisionsEnabled.join(","),
+  });
+
+
+  const realCollectorSafetyLabels = [
+    "Run",
+    "Optimize",
+    "Save",
+    "Apply",
+    "Publish",
+    "Delete",
+    "Export",
+    "Import",
+    "Duplicate",
+    "Create Version",
+    "Clear Duties",
+    "Update Schedule",
+    "Revise Events",
+    "Analyze",
+  ];
+  const realCollectorRefusals = realCollectorSafetyLabels.map((label) =>
+    safetyCheckReadOnlyControl(label),
+  );
+  const partialRealRecords: RealMapScreenEvidence[] = [
+    {
+      screenId: "map-identity",
+      screenTitle: "Map identity / Schedule header",
+      optibusArea: "Schedule header",
+      url: "https://example.optibus.local/map",
+      pageTitle: "Optibus Map",
+      timestamp: new Date().toISOString(),
+      screenshotPath: "screenshots/test-real-map-identity.png",
+      fields: GUIDED_READONLY_SCREENS[0].fields.map((field) => ({
+        ...field,
+        status: field.key === "scheduleId" ? "missing" : "observed",
+        value: field.key === "scheduleId" ? "" : `demo-${field.key}`,
+        note: "demo non-browser test",
+      })),
+    },
+  ];
+  const realAuditEvaluation = evaluateRealMapAudit(partialRealRecords);
+
+  results.push({
+    name: "real guided collector defines required Optibus screens",
+    passed:
+      GUIDED_READONLY_SCREENS.length === 16 &&
+      GUIDED_READONLY_SCREENS.some((screen) => screen.id === "run-history-tasks") &&
+      GUIDED_READONLY_SCREENS.some((screen) => screen.id === "deadhead-catalog"),
+    details: `${GUIDED_READONLY_SCREENS.length} screen(s)`,
+  });
+  results.push({
+    name: "real guided collector refuses destructive controls",
+    passed: realCollectorRefusals.every((refusal) => refusal.refused),
+    details: `${realCollectorRefusals.filter((refusal) => refusal.refused).length}/${realCollectorSafetyLabels.length} refused`,
+  });
+  results.push({
+    name: "real guided collector keeps Controlled Run disabled",
+    passed:
+      realAuditEvaluation.controlledRunEnabled === false &&
+      realAuditEvaluation.decision === "NOT_READY",
+    details: `decision=${realAuditEvaluation.decision}, controlledRunEnabled=${realAuditEvaluation.controlledRunEnabled}`,
   });
 
   for (const result of results) {
