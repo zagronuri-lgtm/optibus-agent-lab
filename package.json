@@ -15,7 +15,8 @@
     "triage:demo": "tsx src/triageDemo.ts",
     "failure:demo": "tsx src/failureDemo.ts",
     "evidence:demo": "tsx src/evidenceDemo.ts",
-    "collect:evidence:demo": "tsx src/collectEvidenceDemo.ts"
+    "collect:evidence:demo": "tsx src/collectEvidenceDemo.ts",
+    "external:demo": "tsx src/externalDemo.ts"
   },
   "repository": {
     "type": "git",

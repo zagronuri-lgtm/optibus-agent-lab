@@ -2,6 +2,7 @@ import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase"
 import { BlockerTriage } from "../../src/blockerTriage";
 import { BrowserEvidenceCollector, demoCaptureInputs } from "../../src/browserEvidenceCollector";
 import { EvidencePlanBuilder } from "../../src/evidencePlan";
+import { buildExternalIntegrationPlan, createDisabledProviders, loadExternalSourcesConfig } from "../../src/externalDataSources";
 import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src/failureDiagnosisCollector";
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
@@ -322,6 +323,30 @@ async function main(): Promise<void> {
     name: "collector report is generated",
     passed: collectionSession.reportPath.endsWith("test_collected_evidence.md"),
     details: collectionSession.reportPath,
+  });
+
+
+  const externalConfig = await loadExternalSourcesConfig();
+  const externalProviders = createDisabledProviders(externalConfig);
+  const externalPlan = buildExternalIntegrationPlan(externalConfig);
+  results.push({
+    name: "external transit providers are defined but inactive",
+    passed:
+      externalProviders.map((provider) => provider.name).join(",") ===
+        "Markav,Open Bus Stride API" &&
+      externalProviders.every((provider) => provider.active === false) &&
+      externalConfig.external_api_calls_enabled === false &&
+      externalConfig.markav_scraping_enabled === false,
+    details: externalProviders.map((provider) => `${provider.name}:active=${provider.active}`).join(";"),
+  });
+  results.push({
+    name: "external sources support future planning decisions only",
+    passed:
+      externalPlan.futureDecisionsEnabled.includes("analyzeDeadheadAsPotentialService") &&
+      externalPlan.futureDecisionsEnabled.includes("validateTripDeletionRisk") &&
+      externalPlan.futureDecisionsEnabled.includes("validateServiceAdditionOpportunity") &&
+      externalPlan.active === false,
+    details: externalPlan.futureDecisionsEnabled.join(","),
   });
 
   for (const result of results) {
