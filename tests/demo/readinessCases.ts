@@ -1,5 +1,6 @@
 import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase";
 import { BlockerTriage } from "../../src/blockerTriage";
+import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src/failureDiagnosisCollector";
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { ReadOnlyMapAudit, type ReadOnlyMapAuditInput } from "../../src/readOnlyMapAudit";
@@ -140,6 +141,54 @@ async function main(): Promise<void> {
     name: "missing DEEP/Pull Reliefs readiness is P1",
     passed: deep?.priority === "P1" && pullReliefs?.priority === "P1",
     details: `deep=${deep?.priority ?? "missing"}, pullReliefs=${pullReliefs?.priority ?? "missing"}`,
+  });
+
+
+
+  const failureConfig = parse(
+    await readFile("configs/holon_failure_diagnosis_demo.yaml", "utf8"),
+  ) as FailureDiagnosisInput;
+  const failureCollector = new FailureDiagnosisCollector(kb);
+  const failureReport = failureCollector.collect(failureConfig);
+  const runB = failureReport.diagnoses.find((diagnosis) => diagnosis.runName === "Run B");
+
+  results.push({
+    name: "failed optimization enters Failure Diagnosis Mode",
+    passed:
+      failureReport.diagnoses.length === 2 &&
+      failureReport.diagnoses.every((diagnosis) => diagnosis.finalStatus === "failed"),
+    details: `${failureReport.diagnoses.length} failed run(s)`,
+  });
+  results.push({
+    name: "unknown failure blocks automatic retry",
+    passed:
+      failureReport.overallFailureClassification === "UNKNOWN" &&
+      failureReport.diagnoses.every((diagnosis) => diagnosis.autoRetryAllowed === false),
+    details: `${failureReport.overallFailureClassification}, retries=${failureReport.diagnoses.map((diagnosis) => diagnosis.autoRetryAllowed).join(",")}`,
+  });
+  results.push({
+    name: "two failed runs increase confidence that map/run configuration needs investigation",
+    passed:
+      failureReport.diagnoses.length === 2 &&
+      failureReport.recommendedNextAction.includes("Read-only failure investigation"),
+    details: failureReport.recommendedNextAction,
+  });
+  results.push({
+    name: "Advanced Vehicle Adapter failure raises workflow risk",
+    passed:
+      runB?.evidence.some((item) =>
+        item.includes("Advanced Vehicle Adapter was used on a failed run"),
+      ) === true,
+    details: runB?.evidence.join(" | ") ?? "missing Run B",
+  });
+  results.push({
+    name: "lack of detailed logs keeps root cause UNKNOWN",
+    passed:
+      failureReport.diagnoses.every((diagnosis) => diagnosis.failureType === "UNKNOWN") &&
+      failureReport.diagnoses.every((diagnosis) =>
+        diagnosis.requiredNextReadOnlyChecks.includes("Task log inspection"),
+      ),
+    details: failureReport.diagnoses.map((diagnosis) => diagnosis.failureType).join(","),
   });
 
   for (const result of results) {
