@@ -11,7 +11,8 @@
     "build": "tsc",
     "doctor": "tsx src/doctor.ts",
     "test:demo": "tsx tests/demo/readinessCases.ts",
-    "audit:demo": "tsx src/auditDemo.ts"
+    "audit:demo": "tsx src/auditDemo.ts",
+    "triage:demo": "tsx src/triageDemo.ts"
   },
   "repository": {
     "type": "git",

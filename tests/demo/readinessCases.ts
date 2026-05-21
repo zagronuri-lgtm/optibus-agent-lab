@@ -1,4 +1,5 @@
 import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase";
+import { BlockerTriage } from "../../src/blockerTriage";
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { ReadOnlyMapAudit, type ReadOnlyMapAuditInput } from "../../src/readOnlyMapAudit";
@@ -86,6 +87,59 @@ async function main(): Promise<void> {
       holonResult.blockers.some((blocker) => blocker.includes("Advanced Vehicle Adapter was tried and failed")) &&
       holonResult.blockers.some((blocker) => blocker.includes("Vehicle Piece Validation")),
     details: `${holonResult.score}, blockers=${holonResult.blockers.length}`,
+  });
+
+  const triage = new BlockerTriage();
+  const triagePlan = triage.triage(holonResult.blockers);
+  const findTriaged = (needle: string) =>
+    triagePlan.triagedBlockers.find((blocker) =>
+      blocker.blocker.includes(needle),
+    );
+  const failureDiagnosis = triagePlan.triagedBlockers.filter((blocker) =>
+    blocker.blocker.includes("Failure diagnosis inspection required"),
+  );
+  const vehiclePieceValidation = findTriaged("Vehicle Piece Validation");
+  const advancedVehicleAdapter = findTriaged("Advanced Vehicle Adapter was tried and failed");
+  const hardSoft = findTriaged("Hard/soft constraints");
+  const deep = findTriaged("DEEP readiness");
+  const pullReliefs = findTriaged("Pull Reliefs");
+
+  results.push({
+    name: "Holon NOT_READY blockers produce DO_NOT_RUN_YET",
+    passed: triagePlan.decision === "DO_NOT_RUN_YET",
+    details: `${triagePlan.decision}, blockers=${triagePlan.triagedBlockers.length}`,
+  });
+  results.push({
+    name: "failure diagnosis blockers are P0/P1",
+    passed:
+      failureDiagnosis.length > 0 &&
+      failureDiagnosis.every((blocker) =>
+        blocker.priority === "P0" || blocker.priority === "P1",
+      ),
+    details: `${failureDiagnosis.length} failure diagnosis blocker(s)`,
+  });
+  results.push({
+    name: "missing Vehicle Piece Validation is P0",
+    passed: vehiclePieceValidation?.priority === "P0",
+    details: vehiclePieceValidation?.priority ?? "missing",
+  });
+  results.push({
+    name: "Advanced Vehicle Adapter tried-and-failed is OPTIMIZATION_WORKFLOW_RISK",
+    passed:
+      advancedVehicleAdapter?.categories.includes(
+        "OPTIMIZATION_WORKFLOW_RISK",
+      ) === true,
+    details: advancedVehicleAdapter?.categories.join(",") ?? "missing",
+  });
+  results.push({
+    name: "missing hard/soft classification is P0 or P1",
+    passed: hardSoft?.priority === "P0" || hardSoft?.priority === "P1",
+    details: hardSoft?.priority ?? "missing",
+  });
+  results.push({
+    name: "missing DEEP/Pull Reliefs readiness is P1",
+    passed: deep?.priority === "P1" && pullReliefs?.priority === "P1",
+    details: `deep=${deep?.priority ?? "missing"}, pullReliefs=${pullReliefs?.priority ?? "missing"}`,
   });
 
   for (const result of results) {
