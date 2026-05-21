@@ -1,5 +1,6 @@
 import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase";
 import { BlockerTriage } from "../../src/blockerTriage";
+import { EvidencePlanBuilder } from "../../src/evidencePlan";
 import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src/failureDiagnosisCollector";
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
@@ -189,6 +190,73 @@ async function main(): Promise<void> {
         diagnosis.requiredNextReadOnlyChecks.includes("Task log inspection"),
       ),
     details: failureReport.diagnoses.map((diagnosis) => diagnosis.failureType).join(","),
+  });
+
+
+  const evidencePlan = new EvidencePlanBuilder().build({
+    readiness: holonResult,
+    triage: triagePlan,
+    failureDiagnosis: failureReport,
+    knowledgeBase: kb,
+  });
+  const p0Blockers = triagePlan.triagedBlockers.filter(
+    (blocker) => blocker.priority === "P0",
+  );
+
+  results.push({
+    name: "evidence plan exists for unknown optimization failure",
+    passed:
+      evidencePlan.finalDecision === "DO_NOT_RUN_YET" &&
+      evidencePlan.evidenceItems.length > 0 &&
+      failureReport.overallFailureClassification === "UNKNOWN",
+    details: `${evidencePlan.finalDecision}, items=${evidencePlan.evidenceItems.length}`,
+  });
+  results.push({
+    name: "each P0 blocker has at least one evidence item",
+    passed: p0Blockers.every((blocker) =>
+      evidencePlan.evidenceItems.some(
+        (item) => item.blockerAddressed === blocker.blocker,
+      ),
+    ),
+    details: `p0=${p0Blockers.length}, items=${evidencePlan.evidenceItems.length}`,
+  });
+  results.push({
+    name: "failed run logs are first priority",
+    passed:
+      evidencePlan.topPrioritySequence[0]?.category === "FAILED_RUN_LOGS" &&
+      evidencePlan.topPrioritySequence[1]?.category === "FAILED_RUN_LOGS",
+    details: evidencePlan.topPrioritySequence
+      .slice(0, 2)
+      .map((item) => item.id)
+      .join(","),
+  });
+  results.push({
+    name: "Vehicle Piece Validation is included",
+    passed: evidencePlan.evidenceItems.some(
+      (item) => item.category === "VEHICLE_PIECE_VALIDATION",
+    ),
+    details: `${evidencePlan.evidenceItems.filter((item) => item.category === "VEHICLE_PIECE_VALIDATION").length} item(s)`,
+  });
+  results.push({
+    name: "Algorithm Parameters / DEEP / Pull Reliefs are included",
+    passed:
+      evidencePlan.evidenceItems.some((item) =>
+        item.exactFieldsToRead.some((field) => field.includes("DEEP")),
+      ) &&
+      evidencePlan.evidenceItems.some((item) =>
+        item.exactFieldsToRead.some((field) => field.includes("Pull Reliefs")),
+      ) &&
+      evidencePlan.evidenceItems.some(
+        (item) => item.category === "ALGORITHM_PARAMETERS",
+      ),
+    details: `${evidencePlan.evidenceItems.filter((item) => item.category === "ALGORITHM_PARAMETERS").length} algorithm item(s)`,
+  });
+  results.push({
+    name: "no evidence item allows Run / Save / Apply / Publish",
+    passed: evidencePlan.evidenceItems.every(
+      (item) => item.readOnlySafe && item.destructiveActionAllowed === false,
+    ),
+    details: `${evidencePlan.evidenceItems.length} read-only item(s)`,
   });
 
   for (const result of results) {

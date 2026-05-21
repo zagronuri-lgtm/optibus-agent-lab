@@ -13,7 +13,8 @@
     "test:demo": "tsx tests/demo/readinessCases.ts",
     "audit:demo": "tsx src/auditDemo.ts",
     "triage:demo": "tsx src/triageDemo.ts",
-    "failure:demo": "tsx src/failureDemo.ts"
+    "failure:demo": "tsx src/failureDemo.ts",
+    "evidence:demo": "tsx src/evidenceDemo.ts"
   },
   "repository": {
     "type": "git",
