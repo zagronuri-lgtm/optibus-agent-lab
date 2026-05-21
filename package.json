@@ -10,7 +10,8 @@
     "demo": "tsx src/index.ts --config configs/holon_baseline.yaml",
     "build": "tsc",
     "doctor": "tsx src/doctor.ts",
-    "test:demo": "tsx tests/demo/readinessCases.ts"
+    "test:demo": "tsx tests/demo/readinessCases.ts",
+    "audit:demo": "tsx src/auditDemo.ts"
   },
   "repository": {
     "type": "git",

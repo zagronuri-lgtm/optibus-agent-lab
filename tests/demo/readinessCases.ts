@@ -1,4 +1,7 @@
 import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase";
+import { readFile } from "node:fs/promises";
+import { parse } from "yaml";
+import { ReadOnlyMapAudit, type ReadOnlyMapAuditInput } from "../../src/readOnlyMapAudit";
 import { RulesEngine, OPTIMIZATION_FAILURE_MESSAGE } from "../../src/rulesEngine";
 
 interface CaseResult {
@@ -69,6 +72,20 @@ async function main(): Promise<void> {
     name: "real knowledge base clears missing-knowledge gate",
     passed: kb.loaded && isRealKnowledgeBase(kb),
     details: `exists=${kb.loaded}, placeholder=${kb.isPlaceholder}`,
+  });
+
+  const holonConfig = parse(
+    await readFile("configs/holon_readiness_audit_demo.yaml", "utf8"),
+  ) as ReadOnlyMapAuditInput;
+  const holonAudit = new ReadOnlyMapAudit(kb);
+  const holonResult = holonAudit.evaluate(holonConfig);
+  results.push({
+    name: "Holon readiness audit is NOT_READY",
+    passed:
+      holonResult.score === "NOT_READY" &&
+      holonResult.blockers.some((blocker) => blocker.includes("Advanced Vehicle Adapter was tried and failed")) &&
+      holonResult.blockers.some((blocker) => blocker.includes("Vehicle Piece Validation")),
+    details: `${holonResult.score}, blockers=${holonResult.blockers.length}`,
   });
 
   for (const result of results) {
