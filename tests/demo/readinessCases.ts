@@ -1,5 +1,6 @@
 import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase";
 import { BlockerTriage } from "../../src/blockerTriage";
+import { BrowserEvidenceCollector, demoCaptureInputs } from "../../src/browserEvidenceCollector";
 import { EvidencePlanBuilder } from "../../src/evidencePlan";
 import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src/failureDiagnosisCollector";
 import { readFile } from "node:fs/promises";
@@ -257,6 +258,70 @@ async function main(): Promise<void> {
       (item) => item.readOnlySafe && item.destructiveActionAllowed === false,
     ),
     details: `${evidencePlan.evidenceItems.length} read-only item(s)`,
+  });
+
+
+  const collector = new BrowserEvidenceCollector({
+    screenshotDir: "screenshots/test-demo",
+    evidenceLogDir: "logs/evidence-test",
+    reportPath: "reports/generated/test_collected_evidence.md",
+  });
+  const safetyLabels = [
+    "Run",
+    "Optimize",
+    "Save",
+    "Apply",
+    "Publish",
+    "Delete",
+    "Export",
+    "Import",
+    "Duplicate",
+    "Create Version",
+    "Clear Duties",
+    "Update Schedule",
+    "Revise Events",
+    "Analyze",
+  ];
+  const safetyRefusals = safetyLabels.map((label) =>
+    collector.safetyCheckControl(label),
+  );
+  const collectionSession = await collector.simulateCapture(
+    demoCaptureInputs(evidencePlan.evidenceItems),
+  );
+
+  results.push({
+    name: "collector refuses destructive controls",
+    passed: safetyRefusals.every((refusal) => refusal.refused),
+    details: `${safetyRefusals.filter((refusal) => refusal.refused).length}/${safetyLabels.length} refused`,
+  });
+  results.push({
+    name: "collector saves evidence records",
+    passed:
+      collectionSession.records.length === 5 &&
+      collectionSession.records.every((record) => record.screenshotPath),
+    details: `${collectionSession.records.length} record(s)`,
+  });
+  results.push({
+    name: "collector links evidence record to blocker",
+    passed: collectionSession.records.every((record) => record.blockerAddressed.length > 0),
+    details: collectionSession.records.map((record) => record.evidenceItemId).join(","),
+  });
+  results.push({
+    name: "collector can mark blocker as unresolved",
+    passed: collectionSession.records.some(
+      (record) => !record.closesBlocker && record.followUpRequired,
+    ),
+    details: `${collectionSession.records.filter((record) => !record.closesBlocker).length} unresolved record(s)`,
+  });
+  results.push({
+    name: "collector does not enable Run after evidence collection",
+    passed: collectionSession.controlledRunEnabled === false,
+    details: `controlledRunEnabled=${collectionSession.controlledRunEnabled}`,
+  });
+  results.push({
+    name: "collector report is generated",
+    passed: collectionSession.reportPath.endsWith("test_collected_evidence.md"),
+    details: collectionSession.reportPath,
   });
 
   for (const result of results) {
