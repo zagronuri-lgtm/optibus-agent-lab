@@ -1,90 +1,85 @@
 # Optibus Agent Lab
 
-Optibus Agent Lab is an internal, safety-first browser-agent framework for
-auditing Optibus maps and preparing controlled run reviews. It is built around a
-finite-state workflow, explicit approval gates, Playwright browser automation,
-Markdown/YAML configuration, local file logging, and report templates that keep
-facts separate from assumptions, risks, and recommendations.
+Optibus Agent Lab is a safe internal TypeScript + Playwright framework for auditing Optibus maps, diagnosing scheduling issues, preparing run configurations, and recording controlled run simulations after approval.
 
-This v1 scaffold is intentionally read-only for real Optibus operations:
+The agent is governed by `knowledge/optibus_mastery.md`, which is treated as the authoritative Optibus operating manual. Workflow code and YAML configs are subordinate to that knowledge base.
 
-- It must not bypass login, captcha, permissions, or any security control.
-- It must not hardcode credentials.
-- It must not perform real `Run`, `Save`, `Apply`, `Publish`, `Delete`,
-  `Export`, `Import`, `Duplicate`, or `Create Version` actions.
-- Any controlled-run behavior is simulated and logged only.
+## Safety posture
 
-## Repository layout
+v1 is read-only for real Optibus browser actions:
+
+- Do not hardcode real credentials.
+- Do not bypass login, captcha, MFA, permissions, or security controls.
+- Do not click real `Run`, `Save`, `Apply`, `Publish`, `Delete`, `Export`, `Import`, `Duplicate`, or `Create Version` controls.
+- Controlled Run Mode simulates Run by logging intent only.
+- Every potentially destructive action requires a typed approval token and must still pass the rules engine.
+
+## Project structure
 
 ```text
-AGENT_RULES.md                 Permanent safety rules
-configs/                       Example YAML scenarios
-reports/                       Markdown report templates
-src/                           TypeScript framework modules
-workflows/                     Human-readable workflow definitions
-logs/                          Local JSONL action logs, ignored by git
-artifacts/screenshots/         Local screenshots, ignored by git
+README.md
+AGENT_RULES.md
+KNOWLEDGE_BASE.md
+knowledge/optibus_mastery.md
+workflows/
+configs/
+src/
+reports/
+logs/                 local JSONL action logs, ignored except .gitkeep
+screenshots/          local screenshots, ignored except .gitkeep
 ```
+
+## Workflow states
+
+1. Academy Mode
+2. Map Audit Mode
+3. Scheduling Preferences Audit
+4. Run Mechanics Audit
+5. Run Readiness Gate
+6. Controlled Run Mode
+7. Failure Diagnosis Mode
+8. Post-Run Comparison
+
+The agent must never jump directly to Run. Before every simulated Run it must verify Optibus-specific readiness across cost preferences, depot setup, midday park, algorithm parameters, pre/post trip, reliefs, trip connections, duty/work/time limitations, split breaks, short pieces, crew relaxation, global constraints, vehicle piece validation, deadhead catalog, and validation panel issues.
 
 ## Setup
 
 ```bash
 npm install
 npm run typecheck
-```
-
-Run the scaffold in planning mode with an example config:
-
-```bash
 npm run demo
 ```
 
-The demo does not log into Optibus and does not execute browser actions against
-real tenant data. Real browser use requires an operator to authenticate manually
-through normal Optibus controls.
+`npm run demo` runs plan-only mode against `configs/holon_baseline.yaml`. It does not launch a browser, log in, or touch Optibus.
 
-## Safety model
+## Optional browser mode
 
-The agent progresses through a finite-state workflow:
+Browser mode is intended for operator-supervised read-only audits after manual login through normal Optibus controls:
 
-1. Academy Mode
-2. Map Audit Mode
-3. Run Readiness Mode
-4. Approval Gate
-5. Controlled Run Mode
-6. Post-Run Comparison
-7. Failure Diagnosis Mode
+```bash
+npm start -- --config configs/holon_baseline.yaml --browser --headed
+```
 
-Browser actions flow through `SafetyGate` before Playwright receives them. The
-gate detects destructive intent from action names, selectors, labels, and
-reasons. In v1, destructive actions are blocked even if an approval token is
-provided. The only supported controlled-run behavior is a simulated run event
-that records what would have happened.
+Do not provide credentials to the agent. The operator must authenticate manually.
 
-Every browser action is logged locally with:
+## Logging
+
+Every browser or workflow action is logged locally with:
 
 - timestamp
-- workflow state
 - URL
 - page title
+- workflow state
 - action
 - selector
 - reason
-- outcome
+- risk level
+- screenshot path when applicable
 
-Major workflow steps save before and after screenshots. Generated reports use
-separate sections for facts, assumptions, risks, and recommendations so that
-audit evidence remains distinguishable from interpretation.
+Major workflow steps capture before/after screenshots in `screenshots/`.
 
-## Configuration
+## Run readiness
 
-YAML scenario files describe the target map, read-only KPI selectors, readiness
-checks, comparison inputs, and required approval tokens. The included examples
-use placeholder URLs and selectors only:
+The rules engine blocks Run when there is no copy/snapshot, baseline KPIs are missing, algorithm choice is unjustified, Advanced Vehicle Adapter is selected without explicit warning, DEEP is required but not configured, pull reliefs are missing when needed, Relief Points are not validated, Duty Types are incomplete, hard/soft constraints are unknown, or validation issues are not classified.
 
-- `configs/holon_baseline.yaml`
-- `configs/run_A_driver_only.yaml`
-- `configs/run_B_vehicle_driver.yaml`
-
-Do not store secrets in YAML. Credentials must be supplied manually through the
-normal browser login flow.
+If a run fails with `Optimization could not be completed`, the agent must not retry automatically. It enters Failure Diagnosis Mode and inspects task log, algorithm parameters, candidate causes, timeout causes, relief points, duty types, short pieces, crew relaxation, vehicle piece validation, trip connections, and deadhead catalog.

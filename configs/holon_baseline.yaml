@@ -1,7 +1,8 @@
 schema_version: 1
 name: holon_baseline
-description: Read-only baseline audit example for a Holon map.
+description: Read-only baseline audit using the Optibus mastery operating manual.
 mode: baseline_audit
+knowledge_base: knowledge/optibus_mastery.md
 
 target:
   tenant: placeholder-tenant
@@ -12,23 +13,20 @@ target:
 safety:
   v1_simulation_only: true
   require_approval_token: true
-  prohibited_actions:
-    - Save
-    - Apply
-    - Publish
-    - Delete
-    - Export
-    - Import
-    - Duplicate
-    - Create Version
-    - Run
+  expected_simulated_run_token: "APPROVE:Controlled Run Mode:Run"
 
 workflow:
-  start_state: AcademyMode
+  start_state: "Academy Mode"
   planned_states:
-    - AcademyMode
-    - MapAuditMode
-    - RunReadinessMode
+    - "Academy Mode"
+    - "Map Audit Mode"
+    - "Scheduling Preferences Audit"
+    - "Run Mechanics Audit"
+    - "Run Readiness Gate"
+
+map_audit:
+  has_copy_or_snapshot: false
+  baseline_kpis_present: false
 
 audit:
   map_identifiers:
@@ -40,16 +38,50 @@ audit:
     - name: Route count
       selector: "[data-testid='kpi-route-count']"
       unit: routes
+      parser: number
     - name: Vehicle count
       selector: "[data-testid='kpi-vehicle-count']"
       unit: vehicles
+      parser: number
     - name: Driver duties
       selector: "[data-testid='kpi-driver-duties']"
       unit: duties
+      parser: number
     - name: Total platform hours
       selector: "[data-testid='kpi-platform-hours']"
       unit: hours
+      parser: number
+
+readiness:
+  cost_preferences_checked: false
+  depot_setup_checked: false
+  midday_park_checked: false
+  algorithm_parameters_checked: false
+  pre_post_trip_checked: false
+  relief_points_checked: false
+  relief_timing_checked: false
+  trip_connections_checked: false
+  duty_types_checked: false
+  work_limitation_checked: false
+  time_limitations_checked: false
+  split_break_definition_checked: false
+  limit_short_pieces_checked: false
+  crew_relaxation_checked: false
+  global_constraints_checked: false
+  vehicle_piece_validation_ready: false
+  deadhead_catalog_checked: false
+  validation_panel_issues_checked: false
+  algorithm_choice_justified: false
+  advanced_vehicle_adapter_selected: false
+  advanced_vehicle_adapter_warning_accepted: false
+  deep_required: false
+  deep_configured: false
+  pull_reliefs_needed: false
+  pull_reliefs_present: false
+  relief_points_validated: false
+  duty_types_complete: false
+  hard_soft_constraints_known: false
+  validation_issues_classified: false
 
 reporting:
-  template: reports/baseline_report_template.md
   output_dir: reports/generated

@@ -2,44 +2,22 @@
 
 ## Purpose
 
-Academy Mode teaches the agent and operator how to observe an Optibus map safely
-before any audit or run-readiness work begins.
+Learn Optibus page structure safely using `knowledge/optibus_mastery.md` before auditing a map.
 
-## Entry criteria
+## Allowed
 
-- Operator has reviewed `AGENT_RULES.md`.
-- Browser session is unauthenticated or manually authenticated by the operator.
-- No map mutation is needed.
-
-## Allowed actions
-
-- Navigate to operator-provided URLs.
-- Read page titles, URLs, labels, tables, and help text.
+- Read visible navigation, labels, help text, titles, URLs, and map context.
 - Capture screenshots.
 - Record facts, assumptions, risks, and recommendations.
 
-## Forbidden actions
+## Forbidden
 
-- Save, Apply, Publish, Delete, Export, Import, Duplicate, Create Version, Run.
+- Run, Save, Apply, Publish, Delete, Export, Import, Duplicate, Create Version.
 - Credential entry by the agent.
-- Bypassing login, captcha, MFA, permissions, or security controls.
-
-## Major steps
-
-1. Start local action log.
-2. Capture initial screenshot.
-3. Review visible navigation and read-only map context.
-4. Record UI terms, map identifiers, and data-source assumptions.
-5. Capture final screenshot.
-
-## Outputs
-
-- Academy notes in the local log.
-- Screenshots for orientation.
-- Human-readable list of learned page landmarks.
+- Bypassing login, captcha, permissions, or security controls.
 
 ## Exit criteria
 
-- The operator can identify the target map and relevant read-only pages.
-- No destructive action has been attempted.
-- Risks and unknowns are documented for Map Audit Mode.
+- The operator confirms the intended map context.
+- The agent has not attempted any destructive action.
+- Unknown UI landmarks are documented as risks.

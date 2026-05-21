@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Config:
+- Failure message:
 - Failed workflow state:
 - Failed action:
 - Generated at:
@@ -10,23 +10,33 @@
 - Page title:
 - Screenshot references:
 
+## Optimization failure inspections
+
+- Task log
+- Algorithm Parameters
+- No Valid Duty Candidates causes
+- Too Many Duty Candidates causes
+- Timeout causes
+- Relief Points
+- Duty Types
+- Limit Short Pieces
+- Crew Relaxation
+- Vehicle Piece Validation
+- Trip Connections
+- Deadhead Catalog
+
 ## Facts
 
-Record only direct evidence: visible errors, blocked action details, selectors,
-timestamps, URLs, page titles, and log references.
+-
 
 ## Assumptions
 
-- Example: The current user may not have permission for the requested view.
-- Example: A selector may have changed after the workflow was authored.
+-
 
 ## Risks
 
-- Example: Retrying could trigger an unsafe or duplicate operation.
-- Example: Missing evidence prevents reliable readiness assessment.
+- Automatic retry is forbidden for `Optimization could not be completed`.
 
 ## Recommendations
 
-- Stop the current workflow.
-- Ask a human owner to review the failure evidence.
-- Update selectors or configuration only after confirming the UI change.
+-

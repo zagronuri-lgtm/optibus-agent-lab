@@ -1,6 +1,9 @@
 node_modules/
 dist/
-logs/
+logs/*
+!logs/.gitkeep
+screenshots/*
+!screenshots/.gitkeep
 artifacts/screenshots/
-*.log
 reports/generated/
+*.log

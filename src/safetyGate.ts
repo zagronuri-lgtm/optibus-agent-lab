@@ -1,11 +1,13 @@
 export enum WorkflowState {
-  AcademyMode = "AcademyMode",
-  MapAuditMode = "MapAuditMode",
-  RunReadinessMode = "RunReadinessMode",
-  ApprovalGate = "ApprovalGate",
-  ControlledRunMode = "ControlledRunMode",
-  PostRunComparison = "PostRunComparison",
-  FailureDiagnosisMode = "FailureDiagnosisMode",
+  AcademyMode = "Academy Mode",
+  MapAuditMode = "Map Audit Mode",
+  SchedulingPreferencesAudit = "Scheduling Preferences Audit",
+  RunMechanicsAudit = "Run Mechanics Audit",
+  RunReadinessGate = "Run Readiness Gate",
+  ApprovalGate = "Approval Gate",
+  ControlledRunMode = "Controlled Run Mode",
+  FailureDiagnosisMode = "Failure Diagnosis Mode",
+  PostRunComparison = "Post-Run Comparison",
 }
 
 export type DestructiveActionName =
@@ -63,10 +65,18 @@ const ALLOWED_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
     WorkflowState.FailureDiagnosisMode,
   ],
   [WorkflowState.MapAuditMode]: [
-    WorkflowState.RunReadinessMode,
+    WorkflowState.SchedulingPreferencesAudit,
     WorkflowState.FailureDiagnosisMode,
   ],
-  [WorkflowState.RunReadinessMode]: [
+  [WorkflowState.SchedulingPreferencesAudit]: [
+    WorkflowState.RunMechanicsAudit,
+    WorkflowState.FailureDiagnosisMode,
+  ],
+  [WorkflowState.RunMechanicsAudit]: [
+    WorkflowState.RunReadinessGate,
+    WorkflowState.FailureDiagnosisMode,
+  ],
+  [WorkflowState.RunReadinessGate]: [
     WorkflowState.ApprovalGate,
     WorkflowState.FailureDiagnosisMode,
   ],
@@ -82,11 +92,17 @@ const ALLOWED_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
   [WorkflowState.FailureDiagnosisMode]: [],
 };
 
+const EXPLICITLY_ALLOWED_DESTRUCTIVE_STATES: Partial<
+  Record<DestructiveActionName, WorkflowState[]>
+> = {
+  Run: [WorkflowState.ControlledRunMode],
+};
+
 export class SafetyGate {
   private currentState: WorkflowState;
 
   constructor(initialState: WorkflowState = WorkflowState.AcademyMode) {
-    this.currentState = initialState;
+    this.currentState = normalizeWorkflowState(initialState);
   }
 
   state(): WorkflowState {
@@ -94,15 +110,18 @@ export class SafetyGate {
   }
 
   transitionTo(nextState: WorkflowState): void {
-    const allowed = ALLOWED_TRANSITIONS[this.currentState].includes(nextState);
+    const normalizedNextState = normalizeWorkflowState(nextState);
+    const allowed = ALLOWED_TRANSITIONS[this.currentState].includes(
+      normalizedNextState,
+    );
     if (!allowed) {
       throw new SafetyGateError({
         allowed: false,
-        reason: `Invalid workflow transition from ${this.currentState} to ${nextState}.`,
+        reason: `Invalid workflow transition from ${this.currentState} to ${normalizedNextState}.`,
       });
     }
 
-    this.currentState = nextState;
+    this.currentState = normalizedNextState;
   }
 
   expectedApprovalToken(
@@ -113,6 +132,7 @@ export class SafetyGate {
   }
 
   evaluateAction(check: SafetyCheck): SafetyDecision {
+    const workflowState = normalizeWorkflowState(check.workflowState);
     const destructiveAction = detectDestructiveAction(check);
     if (!destructiveAction) {
       return {
@@ -121,17 +141,27 @@ export class SafetyGate {
       };
     }
 
+    const allowedStates = EXPLICITLY_ALLOWED_DESTRUCTIVE_STATES[destructiveAction] ?? [];
     const expectedApprovalToken = this.expectedApprovalToken(
-      check.workflowState,
+      workflowState,
       destructiveAction,
     );
+
+    if (!allowedStates.includes(workflowState)) {
+      return {
+        allowed: false,
+        destructiveAction,
+        expectedApprovalToken,
+        reason: `Blocked ${destructiveAction}: ${workflowState} does not explicitly allow it.`,
+      };
+    }
 
     if (check.approvalToken !== expectedApprovalToken) {
       return {
         allowed: false,
         destructiveAction,
         expectedApprovalToken,
-        reason: `Blocked ${destructiveAction}: missing or mismatched approval token for ${check.workflowState}.`,
+        reason: `Blocked ${destructiveAction}: missing or mismatched approval token for ${workflowState}.`,
       };
     }
 
@@ -193,6 +223,23 @@ export function detectDestructiveAction(
   return DESTRUCTIVE_ACTIONS.find((actionName) =>
     destructivePattern(actionName).test(haystack),
   );
+}
+
+export function normalizeWorkflowState(state: WorkflowState | string): WorkflowState {
+  if (Object.values(WorkflowState).includes(state as WorkflowState)) {
+    return state as WorkflowState;
+  }
+
+  const withoutSpaces = String(state).replace(/\s+/g, "").toLowerCase();
+  const matched = Object.values(WorkflowState).find(
+    (value) => value.replace(/\s+/g, "").toLowerCase() === withoutSpaces,
+  );
+
+  if (!matched) {
+    throw new Error(`Unknown workflow state: ${state}`);
+  }
+
+  return matched;
 }
 
 function destructivePattern(actionName: DestructiveActionName): RegExp {

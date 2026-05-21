@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { AgentBrowser } from "./browser";
+import { loadKnowledgeBase } from "./knowledgeBase";
 import { FileLogger } from "./logger";
-import { SafetyGate, WorkflowState } from "./safetyGate";
-import { WorkflowEngine, type LabConfig } from "./workflowEngine";
+import { SafetyGate } from "./safetyGate";
+import { WorkflowEngine, initialWorkflowState, type LabConfig } from "./workflowEngine";
 
 interface CliOptions {
   configPath: string;
@@ -17,13 +18,12 @@ async function main(): Promise<void> {
   const config = await loadConfig(cli.configPath);
   const logger = new FileLogger();
   await logger.init();
+  const knowledgeBase = await loadKnowledgeBase(config.knowledge_base);
 
-  const safetyGate = new SafetyGate(
-    config.workflow?.start_state ?? WorkflowState.AcademyMode,
-  );
+  const safetyGate = new SafetyGate(initialWorkflowState(config));
 
   if (!cli.browserMode) {
-    const engine = new WorkflowEngine({ config, logger, safetyGate });
+    const engine = new WorkflowEngine({ config, logger, safetyGate, knowledgeBase });
     const result = await engine.runPlanOnly();
     printResult(result.reportPath, logger.actionLogPath);
     return;
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   await browser.start();
 
   try {
-    const engine = new WorkflowEngine({ config, logger, safetyGate, browser });
+    const engine = new WorkflowEngine({ config, logger, safetyGate, knowledgeBase, browser });
     const result = await engine.runAuditWorkflow();
 
     if (config.mode === "simulated_controlled_run") {

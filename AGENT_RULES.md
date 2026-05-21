@@ -1,22 +1,77 @@
-# Optibus Agent Permanent Rules
+# Optibus Agent Rules
 
-These rules apply to every Optibus Agent Lab workflow, configuration, browser
-session, and report.
+These permanent rules apply to every Optibus Agent Lab workflow, config, browser session, and report.
 
-## Security and access
+## Knowledge-base authority
+
+1. `knowledge/optibus_mastery.md` is the operating manual.
+2. The agent must not treat Optibus as a generic website.
+3. YAML configs may specialize a scenario, but they may not weaken the knowledge-base safety rules.
+
+## Access and credentials
 
 1. Never hardcode real credentials, tokens, cookies, or tenant secrets.
-2. Never bypass login, captcha, MFA, permissions, network controls, or browser
-   security warnings.
-3. Require a human operator to authenticate manually through approved Optibus
-   login flows.
-4. Treat all tenant, map, schedule, and run data as confidential.
+2. Never bypass login, captcha, MFA, permissions, or browser security controls.
+3. Require a human operator to authenticate manually through approved Optibus login flows.
+4. Treat map, scheduling, KPI, run, and validation data as confidential.
 
-## Destructive-action restrictions
+## Workflow discipline
 
-The agent must never click or submit controls matching these actions unless a
-future workflow version explicitly allows that action in the current state:
+The only valid workflow progression is:
 
+1. Academy Mode
+2. Map Audit Mode
+3. Scheduling Preferences Audit
+4. Run Mechanics Audit
+5. Run Readiness Gate
+6. Controlled Run Mode
+7. Post-Run Comparison
+
+Failure Diagnosis Mode may be entered from any state after a safety block, browser failure, validation failure, or optimization failure. The agent must never jump directly to Run.
+
+## Required checks before Run
+
+Before every Run or simulated Run, the agent must check and log readiness for:
+
+- Cost preferences
+- Depot Setup
+- Midday Park
+- Algorithm Parameters
+- Pre/Post Trip
+- Relief Points
+- Relief Timing
+- Trip Connections
+- Duty Types
+- Work Limitation
+- Time Limitations
+- Split Break Definition
+- Limit Short Pieces
+- Crew Relaxation
+- Global Constraints
+- Vehicle Piece Validation readiness
+- Deadhead Catalog
+- Validation Panel issues
+
+## Run blockers
+
+The rules engine must block Run if:
+
+- There is no copy/snapshot.
+- Baseline KPIs are missing.
+- Algorithm choice is not justified.
+- Advanced Vehicle Adapter is selected without explicit warning.
+- DEEP is required but not configured.
+- Pull reliefs are missing when needed.
+- Relief Points are not validated.
+- Duty Types are incomplete.
+- Hard/Soft constraints are unknown.
+- Validation issues are not classified.
+
+## Destructive controls
+
+The agent cannot click these controls unless the current workflow explicitly allows it and the user provides an approval token:
+
+- Run
 - Save
 - Apply
 - Publish
@@ -25,45 +80,44 @@ future workflow version explicitly allows that action in the current state:
 - Import
 - Duplicate
 - Create Version
-- Run
 
-In v1, real `Run` remains forbidden. Controlled Run Mode only records a
-simulation of the intended run.
+In v1, real clicks on those controls are still blocked. Controlled Run Mode may only log a simulated Run intent.
 
-## Approval gates
+## Approval tokens
 
-1. Every potentially destructive action requires a typed approval token.
-2. Approval tokens are not secrets; they are deliberate friction that confirms a
-   human reviewed the state, action, and reason.
-3. A token must match the expected format for the current state and action:
-   `APPROVE:<WorkflowState>:<ActionName>`.
-4. Missing, malformed, stale, or mismatched tokens must block the action.
-5. Blocking an action is itself an auditable event and must be logged.
+Approval tokens are deliberate human friction, not secrets. The default format is:
 
-## Browser automation
+```text
+APPROVE:<Workflow State>:<ActionName>
+```
 
-1. All Playwright actions must go through the framework safety gate.
-2. Do not call `page.click`, `page.fill`, or equivalent Playwright mutators
-   directly from workflow code.
-3. Log every browser action with timestamp, workflow state, URL, page title,
-   action, selector, reason, and outcome.
-4. Save screenshots before and after every major workflow step.
-5. Prefer read-only selectors, text extraction, and screenshots over mutation.
+Example:
+
+```text
+APPROVE:Controlled Run Mode:Run
+```
+
+## Optimization failure handling
+
+If a run fails with `Optimization could not be completed`, do not retry automatically. Enter Failure Diagnosis Mode and inspect:
+
+- Task log
+- Algorithm Parameters
+- No Valid Duty Candidates causes
+- Too Many Duty Candidates causes
+- Timeout causes
+- Relief Points
+- Duty Types
+- Limit Short Pieces
+- Crew Relaxation
+- Vehicle Piece Validation
+- Trip Connections
+- Deadhead Catalog
 
 ## Reporting discipline
 
-Reports must keep these categories separate:
+Reports must separate facts, assumptions, risks, and recommendations. Never present assumptions or recommendations as facts.
 
-- Facts: observed page state, extracted KPIs, timestamps, screenshots, URLs.
-- Assumptions: unstated context needed to interpret facts.
-- Risks: possible failure modes, data-quality concerns, or unsafe conditions.
-- Recommendations: suggested next steps for human review.
+## Logging discipline
 
-Do not present assumptions or recommendations as facts.
-
-## Failure handling
-
-1. Stop the workflow when safety checks fail.
-2. Capture a screenshot and log entry before reporting failure.
-3. Diagnose failures without retry loops that could trigger destructive actions.
-4. Escalate ambiguous UI states to a human reviewer.
+Every action must log timestamp, URL, page title, workflow state, action, selector, reason, risk level, and screenshot path when available.

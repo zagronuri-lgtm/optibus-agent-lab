@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { EvidenceBuckets, Issue } from "./issueCollector";
 import type { KpiRecord } from "./kpiCollector";
+import type { RunReadinessResult } from "./rulesEngine";
 
 export interface ReportInput {
   title: string;
@@ -9,6 +10,7 @@ export interface ReportInput {
   kpis?: KpiRecord[];
   issues?: Issue[];
   evidence: EvidenceBuckets;
+  readiness?: RunReadinessResult;
 }
 
 export class ReportGenerator {
@@ -38,6 +40,10 @@ export class ReportGenerator {
       "## Issues",
       "",
       renderIssueList(input.issues ?? []),
+      "",
+      "## Run Readiness",
+      "",
+      renderReadiness(input.readiness),
       "",
       renderEvidenceSection("Facts", input.evidence.facts),
       "",
@@ -102,4 +108,28 @@ function renderEvidenceSection(title: string, values: string[]): string {
 
 function escapeTableCell(value: string): string {
   return value.replace(/\|/g, "\\|");
+}
+
+
+function renderReadiness(readiness: RunReadinessResult | undefined): string {
+  if (!readiness) {
+    return "_No run readiness result recorded._";
+  }
+
+  const checks = readiness.checkedItems.map((item) => `- ${item.label}: ${item.checked ? "checked" : "missing"}`);
+  const blockers = readiness.blockers.length > 0
+    ? readiness.blockers.map((blocker) => `- **${blocker.severity.toUpperCase()}** ${blocker.id}: ${blocker.summary}`)
+    : ["- None"];
+
+  return [
+    `Allowed: ${readiness.allowed}`,
+    "",
+    "### Required checks",
+    "",
+    ...checks,
+    "",
+    "### Blockers",
+    "",
+    ...blockers,
+  ].join("\n");
 }

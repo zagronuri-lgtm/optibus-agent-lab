@@ -1,9 +1,10 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
-import { FileLogger, type LogOutcome } from "./logger";
+import { FileLogger, type LogOutcome, type RiskLevel } from "./logger";
 import {
   SafetyGate,
   SafetyGateError,
   WorkflowState,
+  detectDestructiveAction,
   type SafetyDecision,
 } from "./safetyGate";
 
@@ -35,6 +36,7 @@ export class AgentBrowser {
       action: "browser.start",
       reason: "Start isolated Playwright browser context.",
       outcome: "completed",
+      riskLevel: "low",
     });
 
     return this.pageInstance;
@@ -53,6 +55,7 @@ export class AgentBrowser {
       action: "browser.close",
       reason: "Close isolated Playwright browser context.",
       outcome: "completed",
+      riskLevel: "low",
     });
     await this.context?.close();
     await this.browser?.close();
@@ -63,6 +66,7 @@ export class AgentBrowser {
       action: "navigate",
       reason,
       selector: url,
+      riskLevel: "low",
       operation: async () => {
         await this.page().goto(url, { waitUntil: "domcontentloaded" });
       },
@@ -79,6 +83,9 @@ export class AgentBrowser {
       selector,
       reason,
       approvalToken,
+      riskLevel: detectDestructiveAction({ action: "click", selector, reason })
+        ? "critical"
+        : "medium",
       operation: async () => {
         await this.page().click(selector);
       },
@@ -96,6 +103,7 @@ export class AgentBrowser {
       selector,
       reason,
       approvalToken,
+      riskLevel: "medium",
       operation: async () => {
         await this.page().fill(selector, value);
       },
@@ -108,6 +116,7 @@ export class AgentBrowser {
       action: "textContent",
       selector,
       reason,
+      riskLevel: "low",
       operation: async () => {
         value = await this.page().locator(selector).first().textContent();
       },
@@ -128,6 +137,7 @@ export class AgentBrowser {
       selector: screenshotPath,
       reason,
       outcome: "completed",
+      riskLevel: "low",
       screenshotPath,
     });
 
@@ -154,11 +164,11 @@ export class AgentBrowser {
   async simulateRun(reason: string, approvalToken?: string): Promise<void> {
     const decision = this.safetyGate.assertSimulatedRunAllowed(approvalToken);
     if (!decision.allowed) {
-      await this.logSafetyDecision("simulateRun", reason, decision, "blocked");
+      await this.logSafetyDecision("simulateRun", reason, decision, "blocked", "critical");
       throw new SafetyGateError(decision);
     }
 
-    await this.logSafetyDecision("simulateRun", reason, decision, "simulated");
+    await this.logSafetyDecision("simulateRun", reason, decision, "simulated", "high");
   }
 
   private async runGuardedAction(input: {
@@ -166,6 +176,7 @@ export class AgentBrowser {
     selector?: string;
     reason: string;
     approvalToken?: string;
+    riskLevel: RiskLevel;
     operation: () => Promise<void>;
   }): Promise<void> {
     const decision = this.safetyGate.evaluateAction({
@@ -182,6 +193,7 @@ export class AgentBrowser {
         input.reason,
         decision,
         "blocked",
+        "critical",
         input.selector,
       );
       throw new SafetyGateError(decision);
@@ -194,6 +206,7 @@ export class AgentBrowser {
         selector: input.selector,
         reason: input.reason,
         outcome: "completed",
+        riskLevel: input.riskLevel,
       });
     } catch (error) {
       await this.logAction({
@@ -201,6 +214,7 @@ export class AgentBrowser {
         selector: input.selector,
         reason: input.reason,
         outcome: "failed",
+        riskLevel: input.riskLevel,
         details: {
           error: error instanceof Error ? error.message : String(error),
         },
@@ -214,6 +228,7 @@ export class AgentBrowser {
     reason: string,
     decision: SafetyDecision,
     outcome: LogOutcome,
+    riskLevel: RiskLevel,
     selector?: string,
   ): Promise<void> {
     await this.logAction({
@@ -221,6 +236,7 @@ export class AgentBrowser {
       selector,
       reason,
       outcome,
+      riskLevel,
       details: {
         safetyReason: decision.reason,
         destructiveAction: decision.destructiveAction,
@@ -233,6 +249,7 @@ export class AgentBrowser {
     action: string;
     reason: string;
     outcome: LogOutcome;
+    riskLevel: RiskLevel;
     selector?: string;
     screenshotPath?: string;
     details?: Record<string, unknown>;
@@ -246,10 +263,11 @@ export class AgentBrowser {
       url,
       pageTitle,
       action: entry.action,
-      selector: entry.selector,
+      selector: entry.selector ?? "",
       reason: entry.reason,
+      riskLevel: entry.riskLevel,
+      screenshotPath: entry.screenshotPath ?? "",
       outcome: entry.outcome,
-      screenshotPath: entry.screenshotPath,
       details: entry.details,
     });
   }

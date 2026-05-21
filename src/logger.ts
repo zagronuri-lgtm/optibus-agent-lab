@@ -1,6 +1,8 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
+export type RiskLevel = "low" | "medium" | "high" | "critical";
+
 export type LogOutcome =
   | "allowed"
   | "blocked"
@@ -15,10 +17,11 @@ export interface BrowserActionLogEntry {
   url: string;
   pageTitle: string;
   action: string;
-  selector?: string;
+  selector: string;
   reason: string;
+  riskLevel: RiskLevel;
+  screenshotPath: string;
   outcome: LogOutcome;
-  screenshotPath?: string;
   details?: Record<string, unknown>;
 }
 
@@ -37,7 +40,7 @@ export class FileLogger {
   constructor(options: FileLoggerOptions = {}) {
     this.sessionId = options.sessionId ?? createSessionId();
     this.logDir = options.logDir ?? "logs";
-    this.screenshotDir = options.screenshotDir ?? "artifacts/screenshots";
+    this.screenshotDir = options.screenshotDir ?? "screenshots";
     this.actionLogPath = path.join(this.logDir, `${this.sessionId}.jsonl`);
   }
 
@@ -50,6 +53,9 @@ export class FileLogger {
     const completeEntry: BrowserActionLogEntry = {
       timestamp: new Date().toISOString(),
       ...entry,
+      selector: entry.selector ?? "",
+      riskLevel: entry.riskLevel ?? "low",
+      screenshotPath: entry.screenshotPath ?? "",
     };
 
     await appendFile(
