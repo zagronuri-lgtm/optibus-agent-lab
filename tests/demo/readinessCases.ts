@@ -66,8 +66,8 @@ async function main(): Promise<void> {
   });
 
   results.push({
-    name: "placeholder knowledge base blocks controlled run",
-    passed: kb.loaded && !isRealKnowledgeBase(kb),
+    name: "real knowledge base clears missing-knowledge gate",
+    passed: kb.loaded && isRealKnowledgeBase(kb),
     details: `exists=${kb.loaded}, placeholder=${kb.isPlaceholder}`,
   });
 
