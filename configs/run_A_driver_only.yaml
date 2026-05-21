@@ -1,0 +1,48 @@
+schema_version: 1
+name: run_A_driver_only
+description: Simulated driver-only scenario review. No real Optibus run occurs.
+mode: simulated_controlled_run
+
+target:
+  tenant: placeholder-tenant
+  map_name: Holon Baseline Example
+  url: https://example.optibus.local/maps/holon-baseline
+  authentication: manual_login_only
+
+safety:
+  v1_simulation_only: true
+  require_approval_token: true
+  expected_simulated_run_token: "APPROVE:ControlledRunMode:Run"
+
+workflow:
+  start_state: AcademyMode
+  planned_states:
+    - AcademyMode
+    - MapAuditMode
+    - RunReadinessMode
+    - ApprovalGate
+    - ControlledRunMode
+    - PostRunComparison
+
+scenario:
+  run_label: Run A - Driver Only
+  run_type: driver_only
+  real_run_allowed: false
+  simulated_only: true
+  intent: Evaluate driver-duty changes while holding vehicle allocation constant.
+  assumptions:
+    - Baseline map has already been audited in read-only mode.
+    - Vehicle allocation should be treated as unchanged for this comparison.
+    - Any changed KPI values are supplied manually or by a separate approved export.
+
+comparison:
+  baseline_config: configs/holon_baseline.yaml
+  kpis:
+    - Driver duties
+    - Total platform hours
+    - Relief events
+    - Overtime risk indicators
+
+reporting:
+  template: reports/run_comparison_template.md
+  output_dir: reports/generated

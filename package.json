@@ -1,0 +1,33 @@
+{
+  "name": "optibus-agent-lab",
+  "version": "1.0.0",
+  "description": "Safe browser-based agent framework for auditing and running Optibus maps with strict approval gates",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "test": "npm run typecheck",
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/index.ts",
+    "demo": "tsx src/index.ts --config configs/holon_baseline.yaml",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zagronuri-lgtm/optibus-agent-lab.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zagronuri-lgtm/optibus-agent-lab/issues"
+  },
+  "homepage": "https://github.com/zagronuri-lgtm/optibus-agent-lab#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0",
+    "yaml": "^2.9.0"
+  }
+}

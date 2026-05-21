@@ -1,0 +1,55 @@
+schema_version: 1
+name: holon_baseline
+description: Read-only baseline audit example for a Holon map.
+mode: baseline_audit
+
+target:
+  tenant: placeholder-tenant
+  map_name: Holon Baseline Example
+  url: https://example.optibus.local/maps/holon-baseline
+  authentication: manual_login_only
+
+safety:
+  v1_simulation_only: true
+  require_approval_token: true
+  prohibited_actions:
+    - Save
+    - Apply
+    - Publish
+    - Delete
+    - Export
+    - Import
+    - Duplicate
+    - Create Version
+    - Run
+
+workflow:
+  start_state: AcademyMode
+  planned_states:
+    - AcademyMode
+    - MapAuditMode
+    - RunReadinessMode
+
+audit:
+  map_identifiers:
+    - name: Map name
+      selector: "[data-testid='map-name']"
+    - name: Scenario label
+      selector: "[data-testid='scenario-label']"
+  kpis:
+    - name: Route count
+      selector: "[data-testid='kpi-route-count']"
+      unit: routes
+    - name: Vehicle count
+      selector: "[data-testid='kpi-vehicle-count']"
+      unit: vehicles
+    - name: Driver duties
+      selector: "[data-testid='kpi-driver-duties']"
+      unit: duties
+    - name: Total platform hours
+      selector: "[data-testid='kpi-platform-hours']"
+      unit: hours
+
+reporting:
+  template: reports/baseline_report_template.md
+  output_dir: reports/generated
