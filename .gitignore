@@ -9,3 +9,5 @@ reports/generated/
 *.log
 data/exports/*
 !data/exports/.gitkeep
+data/demo_exports/*
+!data/demo_exports/.gitkeep

@@ -2,6 +2,7 @@ import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase"
 import { BlockerTriage } from "../../src/blockerTriage";
 import { BrowserEvidenceCollector, demoCaptureInputs } from "../../src/browserEvidenceCollector";
 import { EvidencePlanBuilder } from "../../src/evidencePlan";
+import { detectDemoFixtureData } from "../../src/analyzeExports";
 import { buildDataFirstAnalysisReport } from "../../src/optibusDataFirstAnalysis";
 import { loadHolonExportsConfig, loadOptibusExcelExports } from "../../src/optibusExcelIntake";
 import { analyzeOptibusSchedule } from "../../src/optibusScheduleAnalysis";
@@ -487,7 +488,7 @@ fields:
   });
 
 
-  const exportsConfig = await loadHolonExportsConfig();
+  const exportsConfig = await loadHolonExportsConfig("configs/holon_exports_demo.yaml");
   const excelDataset = await loadOptibusExcelExports(exportsConfig);
   const excelAnalysis = analyzeOptibusSchedule(excelDataset);
   const excelRecommendations = generateCandidateRecommendations(excelDataset, excelAnalysis);
@@ -533,6 +534,13 @@ fields:
       excelRecommendations.every((recommendation) => recommendation.candidateOnly),
     details: `${excelRecommendations.length} candidate(s)`,
   });
+  const demoDetection = detectDemoFixtureData(excelDataset);
+  results.push({
+    name: "real-mode demo detector catches fixture markers",
+    passed: demoDetection.found && demoDetection.matches.includes("DepotA") && demoDetection.matches.includes("demo"),
+    details: demoDetection.matches.join(","),
+  });
+
   results.push({
     name: "Excel data-first path enables no browser/run/edit actions",
     passed: true,

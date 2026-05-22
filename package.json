@@ -19,7 +19,9 @@
     "external:demo": "tsx src/externalDemo.ts",
     "collect:real:guided": "tsx src/collectRealGuided.ts",
     "data:first:demo": "tsx src/dataFirstDemo.ts",
-    "analyze:exports": "tsx src/analyzeExports.ts"
+    "analyze:exports": "tsx src/analyzeExports.ts",
+    "analyze:exports:demo": "tsx src/analyzeExports.ts --demo",
+    "inspect:exports": "tsx src/inspectExports.ts"
   },
   "repository": {
     "type": "git",

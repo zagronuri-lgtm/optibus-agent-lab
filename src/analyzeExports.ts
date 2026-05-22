@@ -5,13 +5,22 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 async function main(): Promise<void> {
-  const configPath = readOption(process.argv.slice(2), "--config") ?? "configs/holon_exports.yaml";
+  const args = process.argv.slice(2);
+  const demoMode = args.includes("--demo");
+  const configPath = readOption(args, "--config") ?? (demoMode ? "configs/holon_exports_demo.yaml" : "configs/holon_exports.yaml");
   const config = await loadHolonExportsConfig(configPath);
+  if (!demoMode && config.allow_demo_fixture_generation) {
+    throw new Error("Real analyze:exports cannot use fixture generation. Use analyze:exports:demo instead.");
+  }
   const dataset = await loadOptibusExcelExports(config);
+  const demoDetection = detectDemoFixtureData(dataset);
+  if (!demoMode && demoDetection.found) {
+    throw new Error("DEMO/FIXTURE DATA DETECTED IN REAL MODE — STOPPING");
+  }
   const analysis = analyzeOptibusSchedule(dataset);
   const recommendations = generateCandidateRecommendations(dataset, analysis);
   const reportPath = "reports/generated/optibus_data_first_analysis.md";
-  await writeAnalysisReport(reportPath, dataset, analysis, recommendations);
+  await writeAnalysisReport(reportPath, dataset, analysis, recommendations, demoMode);
 
   console.log("Optibus Excel export analysis completed safely.");
   console.log(`Report: ${reportPath}`);
@@ -43,23 +52,29 @@ export async function writeAnalysisReport(
   dataset: Awaited<ReturnType<typeof loadOptibusExcelExports>>,
   analysis: ReturnType<typeof analyzeOptibusSchedule>,
   recommendations: ReturnType<typeof generateCandidateRecommendations>,
+  demoMode = false,
 ): Promise<void> {
   await mkdir(path.dirname(reportPath), { recursive: true });
-  await writeFile(reportPath, renderReport(dataset, analysis, recommendations), "utf8");
+  await writeFile(reportPath, renderReport(dataset, analysis, recommendations, demoMode), "utf8");
 }
 
 function renderReport(
   dataset: Awaited<ReturnType<typeof loadOptibusExcelExports>>,
   analysis: ReturnType<typeof analyzeOptibusSchedule>,
   recommendations: ReturnType<typeof generateCandidateRecommendations>,
+  demoMode: boolean,
 ): string {
   return [
+    demoMode ? "DEMO DATA — NOT REAL OPTIBUS EXPORTS" : "REAL OPTIBUS EXPORTS LOADED",
+    "",
     "# Optibus Data-First Analysis",
     "",
     "## Executive summary",
     "",
     "- Data-first export analysis is active; browser automation and manual guided collection are frozen.",
-    "- This report is generated from Optibus Excel exports or explicit local demo fixtures when real uploads are unavailable.",
+    demoMode
+      ? "- This report is generated from explicit local demo fixtures and must not be treated as real Optibus evidence."
+      : "- This report is generated from configured real-mode Optibus Excel exports.",
     "- No login automation, browser clicks, Run, Save, Apply, Publish, or Excel source modification is performed.",
     `- Schedule: ${dataset.context.scheduleName} (${dataset.context.scheduleId})`,
     "",
@@ -122,12 +137,26 @@ function renderReport(
   ].join("\n");
 }
 
+export interface DemoFixtureDetectionResult {
+  found: boolean;
+  matches: string[];
+}
+
+export function detectDemoFixtureData(value: unknown): DemoFixtureDetectionResult {
+  const haystack = JSON.stringify(value);
+  const markers = ["DepotA", "B2", "B3", "fixture", "demo"];
+  const matches = markers.filter((marker) => new RegExp(marker, "i").test(haystack));
+  return { found: matches.length > 0, matches };
+}
+
 function readOption(args: string[], name: string): string | undefined {
   const index = args.indexOf(name);
   return index === -1 ? undefined : args[index + 1];
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

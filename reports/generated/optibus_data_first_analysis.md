@@ -1,20 +1,22 @@
+DEMO DATA — NOT REAL OPTIBUS EXPORTS
+
 # Optibus Data-First Analysis
 
 ## Executive summary
 
 - Data-first export analysis is active; browser automation and manual guided collection are frozen.
-- This report is generated from Optibus Excel exports or explicit local demo fixtures when real uploads are unavailable.
+- This report is generated from explicit local demo fixtures and must not be treated as real Optibus evidence.
 - No login automation, browser clicks, Run, Save, Apply, Publish, or Excel source modification is performed.
 - Schedule: B Diagnostic Vehicle Driver Holon (s7rQfR9exV)
 
 ## Files loaded
 
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_data_set.xlsx
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_vehicle_schedule.xlsx
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_crew_schedule.xlsx
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_full_schedule.xlsx
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_deadhead_catalog.xlsx
-- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_relief_vehicle_schedule.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_data_set.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_vehicle_schedule.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_crew_schedule.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_full_schedule.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_deadhead_catalog.xlsx
+- /workspace/data/demo_exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_relief_vehicle_schedule.xlsx
 
 ## Data quality checks
 
