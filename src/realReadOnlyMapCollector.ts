@@ -59,6 +59,7 @@ export interface RealCollectorOptions {
   screenshotDir?: string;
   evidenceJsonPath?: string;
   reportPath?: string;
+  screenLimit?: number;
 }
 
 export interface SafetyCheckResult {
@@ -355,7 +356,10 @@ export class RealReadOnlyMapCollector {
       const pageContext = await openGuidedPage(options);
       browser = pageContext.browser;
       const records: RealMapScreenEvidence[] = [];
-      for (const screen of GUIDED_READONLY_SCREENS) {
+      const screens = options.screenLimit
+        ? GUIDED_READONLY_SCREENS.slice(0, options.screenLimit)
+        : GUIDED_READONLY_SCREENS;
+      for (const screen of screens) {
         records.push(await collectScreenEvidence(pageContext.page, screen, readline, options.screenshotDir));
       }
       const evaluated = evaluateRealMapAudit(records);

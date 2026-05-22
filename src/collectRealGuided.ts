@@ -3,6 +3,7 @@ import { RealReadOnlyMapCollector } from "./realReadOnlyMapCollector";
 interface CliOptions {
   url?: string;
   cdpEndpoint?: string;
+  screenLimit?: number;
 }
 
 async function main(): Promise<void> {
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
     reportPath: "reports/generated/real_map_readonly_audit.md",
     evidenceJsonPath: "logs/evidence/real_map_readonly_audit.json",
     screenshotDir: "screenshots",
+    screenLimit: options.screenLimit,
   });
 
   console.log("Real read-only map audit completed safely.");
@@ -27,6 +29,7 @@ function parseArgs(args: string[]): CliOptions {
   return {
     url: readOption(args, "--url"),
     cdpEndpoint: readOption(args, "--cdp"),
+    screenLimit: readNumberOption(args, "--screen-limit"),
   };
 }
 
@@ -36,6 +39,15 @@ function readOption(args: string[], name: string): string | undefined {
     return undefined;
   }
   return args[index + 1];
+}
+
+function readNumberOption(args: string[], name: string): number | undefined {
+  const value = readOption(args, name);
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 main().catch((error) => {
