@@ -1,0 +1,103 @@
+schema_version: 1
+name: holon_readiness_audit_demo
+description: Read-only Holon Run Readiness Audit demo using known baseline values.
+knowledge_base: knowledge/optibus_mastery.md
+
+map_identity:
+  project: Holon
+  dataset: Holon baseline dataset
+  schedule_name: Holon baseline
+  schedule_id: HOLON-DEMO-BASELINE
+  service_day: Weekday
+  version_copy_snapshot: Baseline copy/snapshot not confirmed in demo evidence
+  baseline_kpis_exist: true
+
+baseline_kpis:
+  trips: "1460/1460"
+  blocks: 179
+  pvr: 178
+  duties: 298
+  vehicle_efficiency: "82.72%"
+  crew_efficiency: "77.72%"
+  service_km: "28,632"
+  deadhead_km: "5,983"
+  deadhead_percent: "17.28%"
+  total_cost: null
+  crew_cost: null
+  vehicle_cost: null
+  vehicle_issues: "120 unique / 251 appearances"
+  duty_issues: "34 unique / 44 appearances"
+
+mandatory_optimization_preferences:
+  cost: unknown
+  depot_setup: unknown
+  midday_park: unknown
+  algorithm_parameters: not_confirmed
+  pre_post_trip: unknown
+  deadhead_catalog: unknown
+
+duty_optimization_readiness:
+  relief_points: unknown
+  relief_timing: unknown
+  split_break_definition: unknown
+  duty_breaks: unknown
+  preference_groups: unknown
+  travels_travel_catalog: unknown
+  custom_duty_preference: unknown
+  limit_short_pieces: unknown
+  crew_relaxation: unknown
+  duty_work_content: unknown
+  route_groups: unknown
+  driver_base: unknown
+  time_definitions: unknown
+  break_rules_break_preferences: unknown
+  driver_signing: unknown
+  time_limitations: unknown
+  work_limitation: unknown
+  duty_types: unknown
+  global_constraints: hard_soft_not_classified
+
+vehicle_optimization_readiness:
+  depot_capacity: unknown
+  midday_park_settings: unknown
+  trip_connections: unknown
+  layovers: unknown
+  deadhead_catalog_coverage_indicator: unknown
+  vehicle_preference_designer: not_present
+  vehicle_types_vehicle_groups: unknown
+  vehicle_piece_validation: not_performed
+
+algorithm_readiness:
+  selected_algorithm: Advanced Vehicle Adapter
+  advanced_fixed_blocks_warning_acknowledged: true
+  advanced_vehicle_adapter_tried_and_failed: true
+  vehicle_scheduling_changes_required: true
+  deep_needed: unknown
+  deep_configured: not_confirmed
+  pull_reliefs_checked: not_confirmed
+  algorithm_choice_justification: failed prior diagnostic attempt; not sufficient for approval
+
+failure_diagnosis:
+  previous_run_failed_optimization_not_completed: true
+  prior_failed_runs:
+    - Run A
+    - Run B
+  inspected:
+    task_log: false
+    algorithm_parameters: false
+    no_valid_duty_candidates_causes: false
+    too_many_duty_candidates_causes: false
+    timeout_causes: false
+    relief_points: false
+    duty_types: false
+    limit_short_pieces: false
+    crew_relaxation: false
+    vehicle_piece_validation: false
+    trip_connections: false
+    deadhead_catalog: false
+
+constraints:
+  hard_soft_constraints_classified: false
+
+output:
+  report_path: reports/generated/run_readiness_audit.md
