@@ -11,15 +11,29 @@ const EXPECTED_FILENAMES = [
   "B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_relief_vehicle_schedule.xlsx",
 ];
 
-const DEMO_MARKERS = ["DepotA", "B2", "B3", "fixture", "demo"];
+const STRONG_FIXTURE_MARKERS = ["demo", "fixture", "DepotA", "DepotB", "Source: demo", "generated synthetic"];
+const WEAK_FIXTURE_MARKERS = ["B1", "B2", "B3", "B4"];
 
 interface WorkbookInspection {
   filePath: string;
   fileSizeBytes: number;
   expectedFilename: boolean;
   sheets: SheetInspection[];
-  looksRealOrFixture: "looks_real" | "looks_fixture";
+  looksRealOrFixture: "looks_real" | "looks_suspicious" | "looks_fixture";
   fixtureMarkers: string[];
+  weakMarkers: string[];
+  evidence: string[];
+  deadheadCatalogDetails?: DeadheadCatalogDetails;
+}
+
+interface DeadheadCatalogDetails {
+  sheetNames: string[];
+  rowCount: number;
+  headers: string[];
+  firstTenRows: Record<string, unknown>[];
+  uniqueOriginOrSourceNames: string[];
+  uniqueDestinationNames: string[];
+  replacementRequired: boolean;
 }
 
 interface SheetInspection {
@@ -48,15 +62,70 @@ async function inspectWorkbook(filePath: string): Promise<WorkbookInspection> {
   await workbook.xlsx.readFile(filePath);
   const sheets = workbook.worksheets.map(inspectSheet);
   const raw = JSON.stringify(sheets);
-  const fixtureMarkers = DEMO_MARKERS.filter((marker) => new RegExp(marker, "i").test(raw));
+  const fixtureMarkers = STRONG_FIXTURE_MARKERS.filter((marker) => new RegExp(escapeRegExp(marker), "i").test(raw));
+  const weakMarkers = WEAK_FIXTURE_MARKERS.filter((marker) => new RegExp(`\\b${escapeRegExp(marker)}\\b`, "i").test(raw));
+  const deadheadCatalogDetails = filePath.endsWith("deadhead_catalog.xlsx")
+    ? inspectDeadheadCatalog(workbook)
+    : undefined;
+  const evidence = [
+    ...fixtureMarkers.map((marker) => `strong fixture marker: ${marker}`),
+    ...weakMarkers.map((marker) => `weak generic block-id marker: ${marker}`),
+  ];
+  if (deadheadCatalogDetails?.replacementRequired) {
+    evidence.push("deadhead_catalog.xlsx has only 5 rows and contains strong fixture markers; replace before real analysis");
+  }
   return {
     filePath,
     fileSizeBytes: (await stat(filePath)).size,
     expectedFilename: EXPECTED_FILENAMES.some((name) => filePath.endsWith(name)),
     sheets,
-    looksRealOrFixture: fixtureMarkers.length > 0 ? "looks_fixture" : "looks_real",
+    looksRealOrFixture: fixtureMarkers.length > 0 ? "looks_fixture" : weakMarkers.length > 0 ? "looks_suspicious" : "looks_real",
     fixtureMarkers,
+    weakMarkers,
+    evidence,
+    deadheadCatalogDetails,
   };
+}
+
+
+function inspectDeadheadCatalog(workbook: ExcelJS.Workbook): DeadheadCatalogDetails {
+  const worksheet = workbook.getWorksheet("Deadheads") ?? workbook.worksheets[0];
+  const headers = worksheet ? (worksheet.getRow(1).values as unknown[]).slice(1).map((value) => String(value ?? "")) : [];
+  const firstTenRows: Record<string, unknown>[] = [];
+  if (worksheet) {
+    for (let rowNumber = 2; rowNumber <= Math.min(worksheet.rowCount, 11); rowNumber += 1) {
+      const values = (worksheet.getRow(rowNumber).values as unknown[]).slice(1);
+      if (values.length === 0 || values.every((value) => value === undefined || value === null || value === "")) {
+        continue;
+      }
+      firstTenRows.push(Object.fromEntries(headers.map((header, index) => [header, cellValue(values[index])])));
+    }
+  }
+  const uniqueOriginOrSourceNames = unique(
+    firstTenRows.flatMap((row) => [String(row.FromPlaceId ?? ""), String(row.Source ?? "")]).filter(Boolean),
+  );
+  const uniqueDestinationNames = unique(
+    firstTenRows.map((row) => String(row.ToPlaceId ?? "")).filter(Boolean),
+  );
+  const raw = JSON.stringify(firstTenRows);
+  const hasStrongMarker = STRONG_FIXTURE_MARKERS.some((marker) => new RegExp(escapeRegExp(marker), "i").test(raw));
+  return {
+    sheetNames: workbook.worksheets.map((sheet) => sheet.name),
+    rowCount: worksheet?.rowCount ?? 0,
+    headers,
+    firstTenRows,
+    uniqueOriginOrSourceNames,
+    uniqueDestinationNames,
+    replacementRequired: (worksheet?.rowCount ?? 0) <= 5 && hasStrongMarker,
+  };
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function inspectSheet(worksheet: ExcelJS.Worksheet): SheetInspection {

@@ -140,13 +140,21 @@ function renderReport(
 export interface DemoFixtureDetectionResult {
   found: boolean;
   matches: string[];
+  weakMatches: string[];
 }
+
+export const STRONG_FIXTURE_MARKERS = ["demo", "fixture", "DepotA", "DepotB", "Source: demo", "generated synthetic"];
+export const WEAK_FIXTURE_MARKERS = ["B1", "B2", "B3", "B4"];
 
 export function detectDemoFixtureData(value: unknown): DemoFixtureDetectionResult {
   const haystack = JSON.stringify(value);
-  const markers = ["DepotA", "B2", "B3", "fixture", "demo"];
-  const matches = markers.filter((marker) => new RegExp(marker, "i").test(haystack));
-  return { found: matches.length > 0, matches };
+  const matches = STRONG_FIXTURE_MARKERS.filter((marker) => new RegExp(escapeRegExp(marker), "i").test(haystack));
+  const weakMatches = WEAK_FIXTURE_MARKERS.filter((marker) => new RegExp(`\\b${escapeRegExp(marker)}\\b`, "i").test(haystack));
+  return { found: matches.length > 0, matches, weakMatches };
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function readOption(args: string[], name: string): string | undefined {

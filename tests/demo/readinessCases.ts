@@ -537,8 +537,12 @@ fields:
   const demoDetection = detectDemoFixtureData(excelDataset);
   results.push({
     name: "real-mode demo detector catches fixture markers",
-    passed: demoDetection.found && demoDetection.matches.includes("DepotA") && demoDetection.matches.includes("demo"),
-    details: demoDetection.matches.join(","),
+    passed:
+      demoDetection.found &&
+      demoDetection.matches.includes("DepotA") &&
+      demoDetection.matches.includes("demo") &&
+      demoDetection.weakMatches.includes("B2"),
+    details: `strong=${demoDetection.matches.join(",")}; weak=${demoDetection.weakMatches.join(",")}`,
   });
 
   results.push({
