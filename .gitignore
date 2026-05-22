@@ -7,3 +7,5 @@ screenshots/*
 artifacts/screenshots/
 reports/generated/
 *.log
+data/exports/*
+!data/exports/.gitkeep

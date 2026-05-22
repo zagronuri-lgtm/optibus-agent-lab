@@ -2,128 +2,115 @@
 
 ## Executive summary
 
-- Data-first architecture is active for analysis scaffolding; browser-guided collection is frozen for now.
-- This report uses Holon baseline sample data already collected in prior work.
-- No real Optibus Run, login automation, Save, Apply, Publish, or map mutation is implemented.
+- Data-first export analysis is active; browser automation and manual guided collection are frozen.
+- This report is generated from Optibus Excel exports or explicit local demo fixtures when real uploads are unavailable.
+- No login automation, browser clicks, Run, Save, Apply, Publish, or Excel source modification is performed.
+- Schedule: B Diagnostic Vehicle Driver Holon (s7rQfR9exV)
 
-## Findings
+## Files loaded
 
-### KPI analysis
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_data_set.xlsx
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_vehicle_schedule.xlsx
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_crew_schedule.xlsx
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_full_schedule.xlsx
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_deadhead_catalog.xlsx
+- /workspace/data/exports/B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_relief_vehicle_schedule.xlsx
 
-- Severity: info
-- Finding: Holon baseline KPIs are available from prior collected values.
-- Evidence:
-  - Trips: 1460/1460
-  - Blocks: 179
-  - PVR: 178
-  - Duties: 298
-  - Vehicle Efficiency: 82.72%
-  - Crew Efficiency: 77.72%
-  - Service km: 28632
-  - Deadhead km: 5983
-  - Deadhead %: 17.28%
+## Data quality checks
 
-### Deadhead analysis
+- Loaded files: 6
+- Trips rows: 1460
+- Vehicle schedule events: 2175
+- Crew schedule events: 1460
+- Deadhead catalog entries: 4
+- relief_vehicle_schedule Sheet1 is empty and was handled gracefully.
 
-- Severity: warning
-- Finding: Deadhead percentage is high enough to require detailed deadhead export review.
-- Evidence:
-  - Deadhead %: 17.28%
-- Recommendation: Use the deadhead report to rank movements by distance/time and test service-from-deadhead candidates with external validation later.
+## KPI reconciliation
 
-### Vehicle issue analysis
+- Number of service trips: 1460
+- Number of vehicle events: 2175
+- Number of crew events: 1460
+- Number of blocks: 179
+- Number of duties: 298
+- Service km: 28632
+- Deadhead km: 4475
+- Depot pull-out km: 754
+- Depot pull-in km: 754
+- Total non-service km: 5983
+- Deadhead percentage: 17.28%
 
-- Severity: critical
-- Finding: Vehicle Issues are high: 120 unique / 251 appearances.
-- Evidence:
-  - Unique count: 120
-  - Appearance count: 251
-- Recommendation: Inspect vehicle issue categories, vehicle-piece validation, depot allocation, trip connections, and deadhead coverage.
+## Deadhead analysis
 
-### Duty issue analysis
+- Catalog coverage: 4/7 pairs (57.14%)
+- Missing catalog pairs: 3
 
-- Severity: critical
-- Finding: Duty Issues are high: 34 unique / 44 appearances.
-- Evidence:
-  - Unique count: 34
-  - Appearance count: 44
-- Recommendation: Inspect duty type conflicts, Regulation 168-related rules, split duties, relief points, and work/time limitations.
+## Top deadhead pairs
 
-### Optimization failure analysis
+- רידינג -> עתידים: 1560 km, 130 events, catalog covered=true
+- וולפסון -> הבנאי: 1080 km, 120 events, catalog covered=true
+- עתידים -> שיכון ובינוי: 900 km, 90 events, catalog covered=false
+- DepotA -> חולון: 754 km, 110 events, catalog covered=true
+- חולון -> DepotA: 754 km, 110 events, catalog covered=true
+- הבנאי -> רידינג: 560 km, 80 events, catalog covered=false
+- שיכון ובינוי -> וולפסון: 375 km, 75 events, catalog covered=false
 
-- Severity: critical
-- Finding: Prior diagnostic runs failed and optimization failure root cause remains unresolved.
-- Evidence:
-  - Run A - Driver-only Diagnostic: Advanced Fixed blocks - Optimization could not be completed
-  - Run B - Vehicle + Driver Diagnostic: Advanced Vehicle adapter - Optimization could not be completed
-- Recommendation: Use run history/exported optimization reports and task logs before any further run planning.
+## Top blocks by deadhead
 
-### Preference analysis
+- B2: 37.85 non-service km (deadhead=31, pull-out=6.85, pull-in=0)
+- B3: 37.85 non-service km (deadhead=31, pull-out=6.85, pull-in=0)
+- B4: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B5: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B6: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B7: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B8: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B9: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B10: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
+- B11: 37.85 non-service km (deadhead=31, pull-out=0, pull-in=6.85)
 
-- Severity: warning
-- Finding: Algorithm Parameters / DEEP readiness is not confirmed.
-- Evidence:
-  - Domain: algorithm_parameters
-  - Hard/soft: unknown
-- Recommendation: Load the preferences report/export or validated screenshots before making run-readiness claims.
+## Route-level summary
 
-### Trip connection analysis
+- 26 / 26-A: 292 trips, 5726.12 service km
+- 126 / 126-A: 292 trips, 5726.12 service km
+- 22 / 22-A: 292 trips, 5726.12 service km
+- 35 / 35-A: 292 trips, 5726.12 service km
+- 77 / 77-A: 292 trips, 5727.52 service km
 
-- Severity: warning
-- Finding: Trip Connections / Pull Reliefs is not confirmed.
-- Evidence:
-  - Domain: trip_connections
-  - Hard/soft: unknown
-- Recommendation: Load the preferences report/export or validated screenshots before making run-readiness claims.
+## Depot/place analysis
 
-### Preference analysis
+- חולון: type=stop, vehicle events=1680
+- רידינג: type=stop, vehicle events=1670
+- עתידים: type=stop, vehicle events=220
+- DepotA: type=depot, vehicle events=220
+- הבנאי: type=stop, vehicle events=200
+- וולפסון: type=stop, vehicle events=195
+- שיכון ובינוי: type=stop, vehicle events=165
 
-- Severity: warning
-- Finding: Hard/soft constraints is not fully classified.
-- Evidence:
-  - Domain: global_constraints
-  - Hard/soft: unknown
-- Recommendation: Load the preferences report/export or validated screenshots before making run-readiness claims.
+## Candidate recommendations
 
-### Preference analysis
+- [P1] Review רידינג -> עתידים as a candidate service-from-deadhead opportunity (deadhead_to_service, candidate only)
+- [P1] Review וולפסון -> הבנאי as a candidate service-from-deadhead opportunity (deadhead_to_service, candidate only)
+- [P1] Review עתידים -> שיכון ובינוי as a candidate service-from-deadhead opportunity (deadhead_to_service, candidate only)
+- [P1] Review DepotA -> חולון as a candidate service-from-deadhead opportunity (deadhead_to_service, candidate only)
+- [P1] Review חולון -> DepotA as a candidate service-from-deadhead opportunity (deadhead_to_service, candidate only)
+- [P1] Review block B2 for high non-service km (high_cost_block_review, candidate only)
+- [P1] Review block B3 for high non-service km (high_cost_block_review, candidate only)
+- [P1] Review block B4 for high non-service km (high_cost_block_review, candidate only)
+- [P1] Review block B5 for high non-service km (high_cost_block_review, candidate only)
+- [P1] Review block B6 for high non-service km (high_cost_block_review, candidate only)
+- [P1] Check deadhead catalog coverage for עתידים -> שיכון ובינוי (deadhead_catalog_gap, candidate only)
+- [P1] Check deadhead catalog coverage for הבנאי -> רידינג (deadhead_catalog_gap, candidate only)
+- [P1] Check deadhead catalog coverage for שיכון ובינוי -> וולפסון (deadhead_catalog_gap, candidate only)
+- [P0] Review driver rule / duty type conflicts before optimization retry (driver_rule_duty_type_conflict, candidate only)
+- [P0] Investigate failed optimization reports before any new run (optimization_failure_investigation, candidate only)
+- [P2] Check depot reassignment candidates after depot capacities and pull events are validated (depot_reassignment_check, candidate only)
+- [P1] Validate relief points tied to high duty and vehicle issue areas (relief_point_check, candidate only)
+- [P1] Review trip connection penalties for high deadhead corridors (trip_connection_check, candidate only)
 
-- Severity: warning
-- Finding: Vehicle Piece Validation is not performed.
-- Evidence:
-  - Domain: unknown
-  - Hard/soft: unknown
-- Recommendation: Load the preferences report/export or validated screenshots before making run-readiness claims.
+## What must be validated in Optibus before any edit/run
 
-### Candidate service-from-deadhead analysis
-
-- Severity: info
-- Finding: Candidate service-from-deadhead analysis is defined but requires real deadhead export rows and external validation before recommendations.
-- Evidence:
-  - רידינג -> עתידים: 8.5 km
-  - וולפסון -> הבנאי: 6.2 km
-- Recommendation: Do not recommend service additions until deadhead movements are matched to corridor gaps and external service evidence.
-
-
-## Recommendations
-
-- Freeze browser-guided manual collection; prioritize structured Optibus exports.
-- Reduce deadhead by ranking exported deadhead movements by distance, time, route context, and depot assignment.
-- Review depot assignment after vehicle schedule and depot capacity exports are available.
-- Add or adjust relief points only after relief legality, duty issue categories, and driver-rule exports are reviewed.
-- Identify trips or lines for review from trips/blocks/duties exports plus validation issues.
-- Identify deadhead movements that may become revenue service only after deadhead export and external network validation.
-- Identify driver rule / duty type conflicts from duties, crew schedule, issues, and preferences exports.
-- Explain optimization failure using run history/task reports before any future Run request.
-- Prioritize vehicle issue categories and vehicle-piece validation before vehicle optimization changes.
-
-## Real Optibus exports needed next
-
-- Trips export with route, trip ID, start/end times, origin/destination stops, service km.
-- Blocks export with block ID, vehicle/depot assignment, trip sequence, service km, deadhead km.
-- Duties export with duty ID, duty type, driver base, work/paid time, duty events.
-- Vehicle schedule export with vehicle events, layovers, depot pulls, and deadheads.
-- Crew schedule export with duty events, reliefs, breaks, travels, sign-on/sign-off.
-- Issues / validation report with unique issue count, appearances, severity, entity links, dismissed status.
-- Deadhead report with from/to points, distance, duration, timing, and generated/missing pairs.
-- Preferences report if available: cost, depot setup, midday park, algorithm parameters, reliefs, duty rules, trip connections, deadhead catalog.
-- Run history / optimization report if available: run type, algorithm/profile, iterations, status, error message, task log metadata.
+- Confirm these exports match the intended schedule/version/copy.
+- Validate vehicle and duty issue categories from the official validation report.
+- Validate preferences, relief points, trip connections, duty types, and hard/soft constraints.
+- Validate deadhead catalog gaps against Optibus and external service context before any service recommendation.
+- Inspect failed run history/task logs before any optimization retry.
+- Obtain explicit human approval before any future controlled run workflow.

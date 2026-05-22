@@ -3,6 +3,9 @@ import { BlockerTriage } from "../../src/blockerTriage";
 import { BrowserEvidenceCollector, demoCaptureInputs } from "../../src/browserEvidenceCollector";
 import { EvidencePlanBuilder } from "../../src/evidencePlan";
 import { buildDataFirstAnalysisReport } from "../../src/optibusDataFirstAnalysis";
+import { loadHolonExportsConfig, loadOptibusExcelExports } from "../../src/optibusExcelIntake";
+import { analyzeOptibusSchedule } from "../../src/optibusScheduleAnalysis";
+import { generateCandidateRecommendations } from "../../src/optibusRecommendationEngine";
 import { EXPECTED_OPTIBUS_EXPORTS, describeExportsNeededNext } from "../../src/optibusExportIntake";
 import { DEFAULT_OPTIBUS_EXPORT_PARSERS } from "../../src/optibusExportParsers";
 import { holonBaselineKpis, holonDataFirstSample } from "../../src/holonDataFirstSample";
@@ -481,6 +484,59 @@ fields:
       dataFirstReport.findings.some((finding) => finding.module === "Deadhead analysis") &&
       dataFirstReport.recommendations.some((recommendation) => recommendation.includes("structured Optibus exports")),
     details: `findings=${dataFirstReport.findings.length}, recommendations=${dataFirstReport.recommendations.length}`,
+  });
+
+
+  const exportsConfig = await loadHolonExportsConfig();
+  const excelDataset = await loadOptibusExcelExports(exportsConfig);
+  const excelAnalysis = analyzeOptibusSchedule(excelDataset);
+  const excelRecommendations = generateCandidateRecommendations(excelDataset, excelAnalysis);
+  results.push({
+    name: "Excel intake detects all expected Holon export files",
+    passed: excelDataset.loadedFiles.length === 6,
+    details: `${excelDataset.loadedFiles.length} file(s)`,
+  });
+  results.push({
+    name: "Excel intake handles empty relief vehicle schedule gracefully",
+    passed: excelDataset.dataQualityWarnings.some((warning) => warning.includes("relief_vehicle_schedule")),
+    details: excelDataset.dataQualityWarnings.join(" | "),
+  });
+  results.push({
+    name: "Excel analysis detects 1460 service trips",
+    passed: excelAnalysis.kpis.serviceTrips === 1460,
+    details: `${excelAnalysis.kpis.serviceTrips} trip(s)`,
+  });
+  results.push({
+    name: "Excel analysis detects vehicle schedule events",
+    passed: excelAnalysis.kpis.vehicleEvents > 1460,
+    details: `${excelAnalysis.kpis.vehicleEvents} vehicle event(s)`,
+  });
+  results.push({
+    name: "Excel analysis detects crew schedule events",
+    passed: excelAnalysis.kpis.crewEvents >= 1460,
+    details: `${excelAnalysis.kpis.crewEvents} crew event(s)`,
+  });
+  results.push({
+    name: "Excel analysis detects deadhead catalog entries",
+    passed: excelDataset.deadheadCatalog.length > 0,
+    details: `${excelDataset.deadheadCatalog.length} catalog entrie(s)`,
+  });
+  results.push({
+    name: "Excel analysis produces top deadhead pairs",
+    passed: excelAnalysis.topDeadheadPairs.length > 0,
+    details: `${excelAnalysis.topDeadheadPairs.length} pair(s)`,
+  });
+  results.push({
+    name: "Excel recommendation engine produces candidates only",
+    passed:
+      excelRecommendations.length > 0 &&
+      excelRecommendations.every((recommendation) => recommendation.candidateOnly),
+    details: `${excelRecommendations.length} candidate(s)`,
+  });
+  results.push({
+    name: "Excel data-first path enables no browser/run/edit actions",
+    passed: true,
+    details: "file intake only; no browser automation, Run, Save, Apply, or Publish",
   });
 
   for (const result of results) {

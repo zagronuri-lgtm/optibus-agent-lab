@@ -18,7 +18,8 @@
     "collect:evidence:demo": "tsx src/collectEvidenceDemo.ts",
     "external:demo": "tsx src/externalDemo.ts",
     "collect:real:guided": "tsx src/collectRealGuided.ts",
-    "data:first:demo": "tsx src/dataFirstDemo.ts"
+    "data:first:demo": "tsx src/dataFirstDemo.ts",
+    "analyze:exports": "tsx src/analyzeExports.ts"
   },
   "repository": {
     "type": "git",
@@ -37,6 +38,7 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "playwright": "^1.60.0",
     "yaml": "^2.9.0"
   }
