@@ -1,0 +1,47 @@
+{
+  "name": "optibus-agent-lab",
+  "version": "1.0.0",
+  "description": "Safe browser-based agent framework for auditing and running Optibus maps with strict approval gates",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "test": "npm run typecheck",
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/index.ts",
+    "demo": "tsx src/index.ts --config configs/holon_baseline.yaml",
+    "build": "tsc",
+    "doctor": "tsx src/doctor.ts",
+    "test:demo": "tsx tests/demo/readinessCases.ts",
+    "audit:demo": "tsx src/auditDemo.ts",
+    "triage:demo": "tsx src/triageDemo.ts",
+    "failure:demo": "tsx src/failureDemo.ts",
+    "evidence:demo": "tsx src/evidenceDemo.ts",
+    "collect:evidence:demo": "tsx src/collectEvidenceDemo.ts",
+    "external:demo": "tsx src/externalDemo.ts",
+    "collect:real:guided": "tsx src/collectRealGuided.ts",
+    "data:first:demo": "tsx src/dataFirstDemo.ts",
+    "analyze:exports": "tsx src/analyzeExports.ts",
+    "analyze:exports:demo": "tsx src/analyzeExports.ts --demo",
+    "inspect:exports": "tsx src/inspectExports.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zagronuri-lgtm/optibus-agent-lab.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zagronuri-lgtm/optibus-agent-lab/issues"
+  },
+  "homepage": "https://github.com/zagronuri-lgtm/optibus-agent-lab#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "playwright": "^1.60.0",
+    "yaml": "^2.9.0"
+  }
+}

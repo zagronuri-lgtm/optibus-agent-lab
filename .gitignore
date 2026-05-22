@@ -1,0 +1,13 @@
+node_modules/
+dist/
+logs/*
+!logs/.gitkeep
+screenshots/*
+!screenshots/.gitkeep
+artifacts/screenshots/
+reports/generated/
+*.log
+data/exports/*
+!data/exports/.gitkeep
+data/demo_exports/*
+!data/demo_exports/.gitkeep

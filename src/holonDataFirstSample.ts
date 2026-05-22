@@ -1,0 +1,95 @@
+import type { BaselineKpiSummary, OptibusNormalizedDataset } from "./optibusDataModel";
+
+export const holonBaselineKpis: BaselineKpiSummary = {
+  trips: "1460/1460",
+  blocks: 179,
+  pvr: 178,
+  duties: 298,
+  vehicleEfficiencyPercent: 82.72,
+  crewEfficiencyPercent: 77.72,
+  serviceKm: 28632,
+  deadheadKm: 5983,
+  deadheadPercent: 17.28,
+};
+
+export const holonDataFirstSample: OptibusNormalizedDataset = {
+  project: { id: "metropoline", name: "מטרופולין" },
+  dataset: { id: "holon-weekday-2024-12-28-v2", name: "חולון א-ה 28.12_v2", projectId: "metropoline" },
+  schedule: {
+    id: "s7rQfR9exV",
+    name: "חולון א-ה אורי28.12_v2",
+    datasetId: "holon-weekday-2024-12-28-v2",
+    serviceDay: "weekday",
+    version: "Version 2 / Current Version",
+  },
+  routes: [
+    { id: "26", shortName: "26" },
+    { id: "126", shortName: "126" },
+    { id: "22", shortName: "22" },
+    { id: "35", shortName: "35" },
+    { id: "77", shortName: "77" },
+  ],
+  trips: [],
+  blocks: [],
+  duties: [],
+  vehicleEvents: [],
+  dutyEvents: [],
+  deadheads: [
+    { id: "sample-deadhead-1", fromLocationId: "רידינג", toLocationId: "עתידים", distanceKm: 8.5, couldBecomeRevenueService: undefined },
+    { id: "sample-deadhead-2", fromLocationId: "וולפסון", toLocationId: "הבנאי", distanceKm: 6.2, couldBecomeRevenueService: undefined },
+  ],
+  depots: [],
+  reliefPoints: [
+    { id: "reading", name: "רידינג", legal: undefined },
+    { id: "atidim", name: "עתידים", legal: undefined },
+    { id: "wolfson", name: "וולפסון", legal: undefined },
+    { id: "habnai", name: "הבנאי", legal: undefined },
+    { id: "shikun-binui", name: "שיכון ובינוי", legal: undefined },
+  ],
+  issues: [
+    {
+      id: "vehicle-issues-summary",
+      category: "vehicle",
+      severity: "error",
+      message: "Vehicle Issues are high: 120 unique / 251 appearances.",
+      uniqueCount: 120,
+      appearanceCount: 251,
+    },
+    {
+      id: "duty-issues-summary",
+      category: "duty",
+      severity: "error",
+      message: "Duty Issues are high: 34 unique / 44 appearances.",
+      uniqueCount: 34,
+      appearanceCount: 44,
+    },
+  ],
+  preferences: [
+    { id: "algorithm-parameters", domain: "algorithm_parameters", name: "Algorithm Parameters / DEEP readiness", value: "not confirmed", hardOrSoft: "unknown" },
+    { id: "trip-connections", domain: "trip_connections", name: "Trip Connections / Pull Reliefs", value: "not confirmed", hardOrSoft: "unknown" },
+    { id: "global-constraints", domain: "global_constraints", name: "Hard/soft constraints", value: "not fully classified", hardOrSoft: "unknown" },
+    { id: "vehicle-piece-validation", domain: "unknown", name: "Vehicle Piece Validation", value: "not performed", hardOrSoft: "unknown" },
+  ],
+  runResults: [
+    {
+      id: "run-a",
+      runName: "Run A - Driver-only Diagnostic",
+      runType: "driver_only",
+      algorithmProfile: "Advanced Fixed blocks",
+      optimizeVehicles: false,
+      optimizeDuties: true,
+      status: "failed",
+      errorMessage: "Optimization could not be completed",
+    },
+    {
+      id: "run-b",
+      runName: "Run B - Vehicle + Driver Diagnostic",
+      runType: "vehicle_driver",
+      algorithmProfile: "Advanced Vehicle adapter",
+      optimizeVehicles: true,
+      optimizeDuties: true,
+      status: "failed",
+      errorMessage: "Optimization could not be completed",
+    },
+  ],
+};

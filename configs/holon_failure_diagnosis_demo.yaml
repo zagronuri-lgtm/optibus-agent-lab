@@ -1,0 +1,42 @@
+schema_version: 1
+name: holon_failure_diagnosis_demo
+description: Read-only diagnosis for Holon Run A and Run B optimization failures.
+knowledge_base: knowledge/optibus_mastery.md
+schedule_id: HOLON-DEMO-BASELINE
+runs:
+  - run_name: Run A
+    task_name: Driver-only Diagnostic
+    schedule_id: HOLON-DEMO-BASELINE
+    run_type: Driver-only Diagnostic
+    algorithm_profile_used: Advanced Fixed blocks
+    optimize_vehicles: false
+    optimize_duties: true
+    algorithm_iterations: null
+    duty_recut_iterations: null
+    allow_unscheduled_duties: true
+    time_started: null
+    time_ended: null
+    duration: null
+    final_status: failed
+    full_error_message: Optimization could not be completed
+    evidence:
+      - Driver-only diagnostic failed without exposed root-cause details.
+  - run_name: Run B
+    task_name: Vehicle + Driver Diagnostic
+    schedule_id: HOLON-DEMO-BASELINE
+    run_type: Vehicle + Driver Diagnostic
+    algorithm_profile_used: Advanced Vehicle adapter
+    optimize_vehicles: true
+    optimize_duties: true
+    algorithm_iterations: 1
+    duty_recut_iterations: null
+    allow_unscheduled_duties: true
+    time_started: null
+    time_ended: null
+    duration: null
+    final_status: failed
+    full_error_message: Optimization could not be completed
+    evidence:
+      - Vehicle + driver diagnostic failed after one algorithm iteration without exposed root-cause details.
+output:
+  report_path: reports/generated/holon_failure_diagnosis.md

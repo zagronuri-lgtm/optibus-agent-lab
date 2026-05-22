@@ -1,0 +1,31 @@
+schema_version: 1
+name: run_failure_diagnosis
+description: Failure diagnosis template for Optimization could not be completed.
+mode: failure_diagnosis
+knowledge_base: knowledge/optibus_mastery.md
+
+target:
+  tenant: placeholder-tenant
+  map_name: Holon Failure Diagnosis Example
+  url: https://example.optibus.local/maps/holon-failure-diagnosis
+  authentication: manual_login_only
+
+failure:
+  message: "Optimization could not be completed"
+  auto_retry_allowed: false
+  required_inspections:
+    - Task log
+    - Algorithm Parameters
+    - No Valid Duty Candidates causes
+    - Too Many Duty Candidates causes
+    - Timeout causes
+    - Relief Points
+    - Duty Types
+    - Limit Short Pieces
+    - Crew Relaxation
+    - Vehicle Piece Validation
+    - Trip Connections
+    - Deadhead Catalog
+
+reporting:
+  output_dir: reports/generated
