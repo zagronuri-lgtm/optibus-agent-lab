@@ -4,6 +4,7 @@ interface CliOptions {
   url?: string;
   cdpEndpoint?: string;
   screenLimit?: number;
+  quick?: boolean;
 }
 
 async function main(): Promise<void> {
@@ -16,6 +17,7 @@ async function main(): Promise<void> {
     evidenceJsonPath: "logs/evidence/real_map_readonly_audit.json",
     screenshotDir: "screenshots",
     screenLimit: options.screenLimit,
+    quick: options.quick,
   });
 
   console.log("Real read-only map audit completed safely.");
@@ -30,6 +32,7 @@ function parseArgs(args: string[]): CliOptions {
     url: readOption(args, "--url"),
     cdpEndpoint: readOption(args, "--cdp"),
     screenLimit: readNumberOption(args, "--screen-limit"),
+    quick: args.includes("--quick"),
   };
 }
 

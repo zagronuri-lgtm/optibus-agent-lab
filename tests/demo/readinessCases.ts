@@ -7,7 +7,7 @@ import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { ReadOnlyMapAudit, type ReadOnlyMapAuditInput } from "../../src/readOnlyMapAudit";
-import { GUIDED_READONLY_SCREENS, evaluateRealMapAudit, safetyCheckReadOnlyControl, type RealMapScreenEvidence } from "../../src/realReadOnlyMapCollector";
+import { GUIDED_READONLY_SCREENS, evaluateRealMapAudit, fieldsFromQuickBlock, safetyCheckReadOnlyControl, type RealMapScreenEvidence } from "../../src/realReadOnlyMapCollector";
 import { RulesEngine, OPTIMIZATION_FAILURE_MESSAGE } from "../../src/rulesEngine";
 
 interface CaseResult {
@@ -408,6 +408,39 @@ async function main(): Promise<void> {
       realAuditEvaluation.controlledRunEnabled === false &&
       realAuditEvaluation.decision === "NOT_READY",
     details: `decision=${realAuditEvaluation.decision}, controlledRunEnabled=${realAuditEvaluation.controlledRunEnabled}`,
+  });
+
+
+  const quickFields = fieldsFromQuickBlock(
+    GUIDED_READONLY_SCREENS[0],
+    `screen: schedule-header
+fields:
+  project:
+    status: observed
+    value: מטרופולין
+  dataset:
+    status: observed
+    value: חולון א-ה 28.12_v2
+  scheduleName:
+    status: observed
+    value: חולון א-ה אורי28.12_v2
+  scheduleId:
+    status: observed
+    value: s7rQfR9exV
+  serviceDay:
+    status: observed
+    value: Sunday
+  versionCopySnapshot:
+    status: observed
+    value: Version 2 / Current Version`,
+  );
+  results.push({
+    name: "real guided collector quick mode parses YAML field block",
+    passed:
+      quickFields.length === GUIDED_READONLY_SCREENS[0].fields.length &&
+      quickFields.every((field) => field.status === "observed") &&
+      quickFields.some((field) => field.key === "scheduleId" && field.value === "s7rQfR9exV"),
+    details: `${quickFields.length} field(s)`,
   });
 
   for (const result of results) {

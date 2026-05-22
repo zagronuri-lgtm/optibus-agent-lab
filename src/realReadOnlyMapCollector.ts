@@ -3,6 +3,7 @@ import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import { parse as parseYaml } from "yaml";
 
 export type FieldStatus = "observed" | "missing" | "uncertain";
 export type RealAuditDecision = "NOT_READY" | "NEEDS_HUMAN_REVIEW" | "READY_FOR_DIAGNOSTIC_RUN";
@@ -60,6 +61,7 @@ export interface RealCollectorOptions {
   evidenceJsonPath?: string;
   reportPath?: string;
   screenLimit?: number;
+  quick?: boolean;
 }
 
 export interface SafetyCheckResult {
@@ -360,7 +362,7 @@ export class RealReadOnlyMapCollector {
         ? GUIDED_READONLY_SCREENS.slice(0, options.screenLimit)
         : GUIDED_READONLY_SCREENS;
       for (const screen of screens) {
-        records.push(await collectScreenEvidence(pageContext.page, screen, readline, options.screenshotDir));
+        records.push(await collectScreenEvidence(pageContext.page, screen, readline, options.screenshotDir, options.quick));
       }
       const evaluated = evaluateRealMapAudit(records);
       return writeRealMapAuditOutputs(evaluated, {
@@ -398,6 +400,7 @@ async function collectScreenEvidence(
   screen: GuidedScreenDefinition,
   readline: ReturnType<typeof createInterface>,
   screenshotDir = "screenshots",
+  quick = false,
 ): Promise<RealMapScreenEvidence> {
   console.log(`\nScreen: ${screen.title}`);
   console.log(`Navigate manually to: ${screen.optibusArea}`);
@@ -408,13 +411,9 @@ async function collectScreenEvidence(
   await mkdir(screenshotDir, { recursive: true });
   const screenshotPath = path.join(screenshotDir, `real-${screen.id}-${Date.now()}.png`);
   await page.screenshot({ path: screenshotPath, fullPage: true });
-  const fields: CollectedFieldValue[] = [];
-  for (const fieldDef of screen.fields) {
-    const status = await askFieldStatus(readline, fieldDef);
-    const value = await readline.question(`Value for ${fieldDef.label} (blank if unavailable): `);
-    const note = await readline.question(`Note for ${fieldDef.label} (optional): `);
-    fields.push({ ...fieldDef, status, value, note });
-  }
+  const fields = quick
+    ? await collectQuickFields(readline, screen)
+    : await collectInteractiveFields(readline, screen);
 
   return {
     screenId: screen.id,
@@ -426,6 +425,103 @@ async function collectScreenEvidence(
     screenshotPath,
     fields,
   };
+}
+
+async function collectInteractiveFields(
+  readline: ReturnType<typeof createInterface>,
+  screen: GuidedScreenDefinition,
+): Promise<CollectedFieldValue[]> {
+  const fields: CollectedFieldValue[] = [];
+  for (const fieldDef of screen.fields) {
+    const status = await askFieldStatus(readline, fieldDef);
+    const value = await readline.question(`Value for ${fieldDef.label} (blank if unavailable): `);
+    const note = await readline.question(`Note for ${fieldDef.label} (optional): `);
+    fields.push({ ...fieldDef, status, value, note });
+  }
+  return fields;
+}
+
+async function collectQuickFields(
+  readline: ReturnType<typeof createInterface>,
+  screen: GuidedScreenDefinition,
+): Promise<CollectedFieldValue[]> {
+  console.log("Quick mode: paste JSON or YAML for this screen, then enter a single '.' line.");
+  console.log("Expected shape: fields: { fieldKey: { status: observed|missing|uncertain, value: ..., note: ... } }");
+  const pasted = await readPastedBlock(readline);
+  if (!pasted.trim()) {
+    console.log("No block pasted; falling back to field-by-field prompts.");
+    return collectInteractiveFields(readline, screen);
+  }
+
+  try {
+    return fieldsFromQuickBlock(screen, pasted);
+  } catch (error) {
+    console.log(`Could not parse quick block: ${error instanceof Error ? error.message : String(error)}`);
+    console.log("Falling back to field-by-field prompts.");
+    return collectInteractiveFields(readline, screen);
+  }
+}
+
+export function fieldsFromQuickBlock(
+  screen: GuidedScreenDefinition,
+  pastedBlock: string,
+): CollectedFieldValue[] {
+  const parsed = parseQuickBlock(pastedBlock);
+  const fields = parsed.fields ?? parsed;
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    throw new Error("Quick block must contain a fields object.");
+  }
+
+  return screen.fields.map((fieldDef) => {
+    const raw = (fields as Record<string, unknown>)[fieldDef.key] ?? (fields as Record<string, unknown>)[fieldDef.label];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      return { ...fieldDef, status: "missing", value: "", note: "Not included in quick block." };
+    }
+    const fieldInput = raw as Record<string, unknown>;
+    const status = normalizeFieldStatus(fieldInput.status);
+    return {
+      ...fieldDef,
+      status,
+      value: stringifyQuickValue(fieldInput.value),
+      note: stringifyQuickValue(fieldInput.note),
+    };
+  });
+}
+
+async function readPastedBlock(readline: ReturnType<typeof createInterface>): Promise<string> {
+  const lines: string[] = [];
+  while (true) {
+    const line = await readline.question(lines.length === 0 ? "Paste block> " : "... ");
+    if (line.trim() === ".") {
+      return lines.join("\n");
+    }
+    lines.push(line);
+  }
+}
+
+function parseQuickBlock(block: string): Record<string, unknown> {
+  const trimmed = block.trim();
+  if (!trimmed) {
+    return {};
+  }
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    return JSON.parse(trimmed) as Record<string, unknown>;
+  }
+  return parseYaml(trimmed) as Record<string, unknown>;
+}
+
+function normalizeFieldStatus(value: unknown): FieldStatus {
+  if (value === "observed" || value === "missing" || value === "uncertain") {
+    return value;
+  }
+  return value === undefined || value === null ? "missing" : "observed";
+}
+
+function stringifyQuickValue(value: unknown): string {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
 }
 
 async function askFieldStatus(
