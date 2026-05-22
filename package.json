@@ -17,7 +17,8 @@
     "evidence:demo": "tsx src/evidenceDemo.ts",
     "collect:evidence:demo": "tsx src/collectEvidenceDemo.ts",
     "external:demo": "tsx src/externalDemo.ts",
-    "collect:real:guided": "tsx src/collectRealGuided.ts"
+    "collect:real:guided": "tsx src/collectRealGuided.ts",
+    "data:first:demo": "tsx src/dataFirstDemo.ts"
   },
   "repository": {
     "type": "git",

@@ -2,6 +2,10 @@ import { loadKnowledgeBase, isRealKnowledgeBase } from "../../src/knowledgeBase"
 import { BlockerTriage } from "../../src/blockerTriage";
 import { BrowserEvidenceCollector, demoCaptureInputs } from "../../src/browserEvidenceCollector";
 import { EvidencePlanBuilder } from "../../src/evidencePlan";
+import { buildDataFirstAnalysisReport } from "../../src/optibusDataFirstAnalysis";
+import { EXPECTED_OPTIBUS_EXPORTS, describeExportsNeededNext } from "../../src/optibusExportIntake";
+import { DEFAULT_OPTIBUS_EXPORT_PARSERS } from "../../src/optibusExportParsers";
+import { holonBaselineKpis, holonDataFirstSample } from "../../src/holonDataFirstSample";
 import { buildExternalIntegrationPlan, createDisabledProviders, loadExternalSourcesConfig } from "../../src/externalDataSources";
 import { FailureDiagnosisCollector, type FailureDiagnosisInput } from "../../src/failureDiagnosisCollector";
 import { readFile } from "node:fs/promises";
@@ -441,6 +445,42 @@ fields:
       quickFields.every((field) => field.status === "observed") &&
       quickFields.some((field) => field.key === "scheduleId" && field.value === "s7rQfR9exV"),
     details: `${quickFields.length} field(s)`,
+  });
+
+
+  const dataFirstReport = buildDataFirstAnalysisReport(holonDataFirstSample, holonBaselineKpis);
+  results.push({
+    name: "data-first model includes Holon normalized entities",
+    passed:
+      holonDataFirstSample.schedule.id === "s7rQfR9exV" &&
+      holonDataFirstSample.issues.length === 2 &&
+      holonDataFirstSample.runResults.length === 2,
+    details: `issues=${holonDataFirstSample.issues.length}, runs=${holonDataFirstSample.runResults.length}`,
+  });
+  results.push({
+    name: "data-first parser stubs cover CSV Excel JSON",
+    passed:
+      DEFAULT_OPTIBUS_EXPORT_PARSERS.some((parser) => parser.supports({ path: "demo.csv", kind: "trips", format: "csv", receivedAt: "now" })) &&
+      DEFAULT_OPTIBUS_EXPORT_PARSERS.some((parser) => parser.supports({ path: "demo.xlsx", kind: "blocks", format: "xlsx", receivedAt: "now" })) &&
+      DEFAULT_OPTIBUS_EXPORT_PARSERS.some((parser) => parser.supports({ path: "demo.json", kind: "duties", format: "json", receivedAt: "now" })),
+    details: `${DEFAULT_OPTIBUS_EXPORT_PARSERS.length} parser(s)`,
+  });
+  results.push({
+    name: "data-first intake lists required Optibus exports",
+    passed:
+      EXPECTED_OPTIBUS_EXPORTS.includes("trips") &&
+      EXPECTED_OPTIBUS_EXPORTS.includes("issues_validation") &&
+      EXPECTED_OPTIBUS_EXPORTS.includes("run_history") &&
+      describeExportsNeededNext().length >= 9,
+    details: `${EXPECTED_OPTIBUS_EXPORTS.length} expected export kind(s)`,
+  });
+  results.push({
+    name: "data-first report captures Holon risks and recommendations",
+    passed:
+      dataFirstReport.reportPath === "reports/generated/optibus_data_first_analysis.md" &&
+      dataFirstReport.findings.some((finding) => finding.module === "Deadhead analysis") &&
+      dataFirstReport.recommendations.some((recommendation) => recommendation.includes("structured Optibus exports")),
+    details: `findings=${dataFirstReport.findings.length}, recommendations=${dataFirstReport.recommendations.length}`,
   });
 
   for (const result of results) {
