@@ -1,0 +1,77 @@
+schema_version: 1
+name: run_driver_only_diagnostic
+description: Driver-only diagnostic scenario; Run is simulated only.
+mode: simulated_controlled_run
+knowledge_base: knowledge/optibus_mastery.md
+
+target:
+  tenant: placeholder-tenant
+  map_name: Holon Driver Diagnostic Example
+  url: https://example.optibus.local/maps/holon-driver-diagnostic
+  authentication: manual_login_only
+
+safety:
+  v1_simulation_only: true
+  require_approval_token: true
+  expected_simulated_run_token: "APPROVE:Controlled Run Mode:Run"
+
+workflow:
+  start_state: "Academy Mode"
+  planned_states:
+    - "Academy Mode"
+    - "Map Audit Mode"
+    - "Scheduling Preferences Audit"
+    - "Run Mechanics Audit"
+    - "Run Readiness Gate"
+    - "Controlled Run Mode"
+    - "Post-Run Comparison"
+
+scenario:
+  run_label: Driver-only diagnostic
+  run_type: driver_only
+  real_run_allowed: false
+  simulated_only: true
+  intent: Diagnose driver-duty feasibility while holding vehicle assumptions constant.
+  algorithm_choice: driver_diagnostic
+  algorithm_choice_reason: Human-selected to inspect driver-duty and relief behavior.
+  assumptions:
+    - Vehicle allocation remains unchanged for the diagnostic comparison.
+    - Scenario outputs are supplied externally or simulated in v1.
+
+map_audit:
+  has_copy_or_snapshot: true
+  baseline_kpis_present: true
+
+readiness:
+  cost_preferences_checked: true
+  depot_setup_checked: true
+  midday_park_checked: true
+  algorithm_parameters_checked: true
+  pre_post_trip_checked: true
+  relief_points_checked: true
+  relief_timing_checked: true
+  trip_connections_checked: true
+  duty_types_checked: true
+  work_limitation_checked: true
+  time_limitations_checked: true
+  split_break_definition_checked: true
+  limit_short_pieces_checked: true
+  crew_relaxation_checked: true
+  global_constraints_checked: true
+  vehicle_piece_validation_ready: true
+  deadhead_catalog_checked: true
+  validation_panel_issues_checked: true
+  algorithm_choice_justified: true
+  advanced_vehicle_adapter_selected: false
+  advanced_vehicle_adapter_warning_accepted: false
+  deep_required: false
+  deep_configured: false
+  pull_reliefs_needed: true
+  pull_reliefs_present: true
+  relief_points_validated: true
+  duty_types_complete: true
+  hard_soft_constraints_known: true
+  validation_issues_classified: true
+
+reporting:
+  output_dir: reports/generated

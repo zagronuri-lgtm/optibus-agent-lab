@@ -1,0 +1,11 @@
+schema_version: 1
+name: holon_excel_exports_demo
+allow_demo_fixture_generation: true
+base_dir: data/demo_exports
+files:
+  data_set: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_data_set.xlsx
+  vehicle_schedule: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_vehicle_schedule.xlsx
+  crew_schedule: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_crew_schedule.xlsx
+  full_schedule: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_full_schedule.xlsx
+  deadhead_catalog: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_deadhead_catalog.xlsx
+  relief_vehicle_schedule: B_Diagnostic_Vehicle_Driver_Holon_21_05_2026_relief_vehicle_schedule.xlsx
